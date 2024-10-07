@@ -1,9 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
+import acquisitionSlice from "./features/acquisitionSlice";
 
 const store = configureStore({
     reducer: {
-
+        acquisition: acquisitionSlice,
     },
 });
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
 
 export default store;
