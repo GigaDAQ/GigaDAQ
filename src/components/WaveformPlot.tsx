@@ -4,9 +4,10 @@ import { Layout } from 'plotly.js';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 interface WaveformPlotProps {
-  data: number[];
+  data: number[][];
   samplingRate: number;
-  timeCenter: number;
+  timePosition: number;
+  timeBase: number;
   channelOffsets: number[];
   channelRanges: number[];
   sidebarOpen: boolean;
@@ -15,31 +16,36 @@ interface WaveformPlotProps {
 const WaveformPlot: React.FC<WaveformPlotProps> = (
   { data, 
     samplingRate,
-    timeCenter,
+    timePosition,
+    timeBase,
     channelOffsets,
     channelRanges,
     sidebarOpen, 
   }
 ) => {
-  // const plotDivRef = useRef<HTMLDivElement>(null); // Use ref to access the plotly chart
 
-  const time = data.map((_, index) => (index / samplingRate) - timeCenter);
+  // Safegaurd to ensure data is not empty
+  const sineWave = data[0]?.length ? data[0] : Array(1000).fill(0);
+  const squareWave = data[1]?.length ? data[1] : Array(1000).fill(0);
 
-  // useEffect(()=>{
-  //   if( plotDivRef.current){
-  //     Plotly.Plots.resize(plotDivRef.current);
-  //   }
-  // }, [sidebarOpen]);
+  const totalLength = sineWave.length;
+  const time = Array.from({length: totalLength}, (_, i) => (i/samplingRate) * timeBase + timePosition);
+
+  // Determine the initial view window (e.g., only show 1000 points at a time)
+  const visiblePoints = 1000;  // Number of points to display in the initial view
+  const visibleStart = Math.max(0, timePosition);  // Start of the visible window
+  const visibleEnd = visibleStart + visiblePoints / samplingRate * timeBase;  // End of the visible window
+  
 
   return (
-    <div className='w-full h-full'>
+    <div className='plot bg-gray-100 dark:bg-gray-700 w-full h-full'>
     <AutoSizer>
       {({height, width}) =>(
        <Plot
        data={[
          {
            x: time,
-           y: data.map((val) => val * channelRanges[0] + channelOffsets[0]),
+           y: sineWave.map((val) => val * channelRanges[0] + channelOffsets[0]),
            type: 'scatter',
            mode: 'lines',
            line: { color: '#00ff00' },  // Green line color for dark mode
@@ -47,7 +53,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
          },
          {
            x: time,
-           y: data.map((val) => val * channelRanges[1] + channelOffsets[1]),  // Apply channel 2 offset and range
+           y: squareWave.map((val) => val * channelRanges[1] + channelOffsets[1]),  // Apply channel 2 offset and range
            type: 'scatter',
            mode: 'lines',
            line: { color: '#ff0000' },
@@ -57,7 +63,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
        layout={{
          autosize: true,
          title: 'Real-Time Waveform',
-         xaxis: { title: 'Time (s)', showgrid: true, gridcolor: '#444' },  // Dark grid lines
+         xaxis: { title: 'Time (s)', showgrid: true, gridcolor: '#444', range: [visibleStart, visibleEnd] },  // Dark grid lines
          yaxis: { title: 'Voltage (V)', showgrid: true, gridcolor: '#444' },
          paper_bgcolor: '#111',  // Dark background
          plot_bgcolor: '#222',  // Dark plot area

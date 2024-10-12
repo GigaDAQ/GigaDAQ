@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 // import { FiSettings } from 'react-icons/fi'; // Icon for settings
 
 interface SidebarProps{
-  onTimeCenterChange: (center: number) => void;
+  onTimePositionChange: (position: number) => void;
+  onTimeBaseChange: (base: number) => void;
   onOffsetChange: (channel: number, offset: number) => void;
   onRangeChange: (channel: number, range: number) => void;
   isOpen: boolean;
@@ -10,7 +11,8 @@ interface SidebarProps{
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  onTimeCenterChange,
+  onTimeBaseChange,
+  onTimePositionChange,
   onOffsetChange,
   onRangeChange,
   isOpen,
@@ -18,15 +20,21 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   // const [isOpen, setIsOpen] = useState<boolean>(true);
   // const [view, setView] = useState<string>('menu'); // Manage the current sidebar view
-  const [timeCenter, setTimeCenter] = useState<number>(0);
+  const [timePosition, setTimePosition] = useState<number>(0);
+  const [timeBase, setTimeBase] = useState<number>(1);
   const [channelOffsets, setChannelOffsets] = useState<number[]>([0,0]);
   const [channelRanges, setChannelRanges] = useState<number[]>([1,1]);
 
-  const handleTimeCenterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const center = parseFloat(e.target.value);
-    setTimeCenter(center);
-    onTimeCenterChange(center);
+  const handleTimePositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const position = parseFloat(e.target.value);
+    setTimePosition(position);
+    onTimePositionChange(position);
   }
+  const handleTimeBaseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const base = parseFloat(e.target.value);
+    setTimeBase(base);
+    onTimeBaseChange(base);
+  };
 
   const handleChannelOffsetChange = (channel: number, e: React.ChangeEvent<HTMLInputElement>) =>{
     const offset = parseFloat(e.target.value);
@@ -60,15 +68,26 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Time Axis Center Control */}
       {isOpen && (
+        <>
         <div className="p-4">
-          <h3 className="text-sm font-semibold mb-2">Time Axis Center</h3>
+          <h3 className="text-sm font-semibold mb-2">Time Position Center</h3>
           <input
             type="number"
-            value={timeCenter}
-            onChange={handleTimeCenterChange}
+            value={timePosition}
+            onChange={handleTimePositionChange}
             className="bg-gray-700 text-white px-2 py-1 rounded w-full"
           />
         </div>
+        <div className="p-4">
+        <h3 className="text-sm font-semibold mb-2">Time Base Center</h3>
+        <input
+          type="number"
+          value={timeBase}
+          onChange={handleTimeBaseChange}
+          className="bg-gray-700 text-white px-2 py-1 rounded w-full"
+        />
+      </div>
+      </>
       )}
 
       {/* Channel 1 Controls */}

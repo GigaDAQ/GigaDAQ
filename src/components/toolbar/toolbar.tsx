@@ -16,18 +16,26 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme}) => {
   const dispatch = useDispatch<AppDispatch>();
   const [showSettings, setShowSettings] = useState<Boolean>(false);
   const { data, samplingRate, isAcquiring } = useSelector((state: RootState) => state.acquisition);
-  const generateSampleData = (length: number, frequency: number, amplitude: number): number[] => {
-    const data = [];
-    for (let i = 0; i < length; i++) {
-      data.push(amplitude * Math.sin(2 * Math.PI * frequency * (i / length)));
-    }
-    return data;
+  const generateSineWave = (length:number, frequency: number, amplitude: number): number[] => {
+    return Array.from({length}, (_, i) => amplitude * Math.sin(2 * Math.PI * frequency * (i/length)));
+  }
+//   const generateSampleData = (length: number, frequency: number, amplitude: number): number[] => {
+//     const data = [];
+//     for (let i = 0; i < length; i++) {
+//       data.push(amplitude * Math.sin(2 * Math.PI * frequency * (i / length)));
+//     }
+//     return data;
+//   };
+  const generateSquareWave = (length: number, frequency: number, amplitude: number): number[] => {
+    return Array.from({ length }, (_, i) => (Math.sin(2 * Math.PI * frequency * (i / length)) >= 0 ? amplitude : -amplitude));
   };
 
   useEffect(() => {
     if (isAcquiring) {
       const interval = setInterval(() => {
-        const newData = generateSampleData(1000, 5, 1);
+        const newSine = generateSineWave(3000, 5, 1);
+        const newSquare = generateSquareWave(3000, 5, 1);
+        const newData = [newSine, newSquare];
         dispatch(updateData(newData));
       }, 1000 / samplingRate);
 
@@ -62,7 +70,11 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme}) => {
               <AcquisitionControls
                 onStart={() => dispatch(startAcquisition())}
                 onStop={() => dispatch(stopAcquisition())}
-                onSingleAcquisition={() => dispatch(singleAcquisition(generateSampleData(1000, 5, 1)))}
+                onSingleAcquisition={() => {
+                    const sineWave = generateSineWave(1000, 5, 1);
+                    const squareWave = generateSquareWave(1000, 5, 1);
+                    dispatch(singleAcquisition([sineWave, squareWave]));
+                }}
                 onSamplingRateChange={(rate) => dispatch(setSamplingRate(rate))}
                 onTriggerChange={(trigger) => dispatch(setTrigger(trigger))}
               />

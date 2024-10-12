@@ -4,14 +4,14 @@ interface AcquisitionState {
   isAcquiring: boolean;
   samplingRate: number;
   trigger: string;
-  data: number[];
+  data: number[][];
 }
 
 const initialState: AcquisitionState = {
   isAcquiring: false,
   samplingRate: 1000,
   trigger: 'manual',
-  data: [],
+  data: [[], []],
 };
 
 const acquisitionSlice = createSlice({
@@ -24,7 +24,7 @@ const acquisitionSlice = createSlice({
     stopAcquisition(state) {
       state.isAcquiring = false;
     },
-    singleAcquisition(state, action: PayloadAction<number[]>) {
+    singleAcquisition(state, action: PayloadAction<number[][]>) {
       state.data = action.payload;
     },
     setSamplingRate(state, action: PayloadAction<number>) {
@@ -33,7 +33,7 @@ const acquisitionSlice = createSlice({
     setTrigger(state, action: PayloadAction<string>) {
       state.trigger = action.payload;
     },
-    updateData(state, action: PayloadAction<number[]>) {
+    updateData(state, action: PayloadAction<number[][]>) {
       state.data = action.payload;
     },
   },

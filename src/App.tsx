@@ -14,7 +14,8 @@ const App: React.FC = () => {
 
   const { data, samplingRate } = useSelector((state: RootState) => state.acquisition);
 
-  const [timeCenter, setTimeCenter] = useState<number>(0);
+  const [timePosition, setTimePosition] = useState<number>(0);
+  const [timeBase, setTimeBase] = useState<number>(1);
   const [channelOffsets, setChannelOffsets] = useState<number[]>([0, 0]);
   const [channelRanges, setChannelRanges] = useState<number[]>([1, 1]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true); 
@@ -51,7 +52,8 @@ const App: React.FC = () => {
               <WaveformPlot 
                 data={data}
                 samplingRate={samplingRate}
-                timeCenter={timeCenter}
+                timePosition={timePosition}
+                timeBase={timeBase}
                 channelOffsets= {channelOffsets}
                 channelRanges={channelRanges}
                 sidebarOpen={sidebarOpen}
@@ -61,7 +63,8 @@ const App: React.FC = () => {
           {/* Sidebar that matches the plot's height */}
           <div className="absolute top-0 bottom-0 right-0 h-full">
             <Sidebar 
-              onTimeCenterChange={(center) => setTimeCenter(center)}
+              onTimePositionChange={(center) => setTimePosition(center)}
+              onTimeBaseChange={(timeBase) => setTimeBase(timeBase)}
               onOffsetChange={(channel, offset) => {
                 const updatedOffsets = [...channelOffsets];
                 updatedOffsets[channel] = offset;
