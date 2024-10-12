@@ -45,36 +45,47 @@ const AcquisitionControls: React.FC<AcquisitionControlsProps> = ({
 
     return (
         <>
-            <div className="flex flex-col p-4 border rounded-lg">
-                <h2 className="text-lg font-semibold mb-4">Data Acquisition Controls</h2>
-                <div className="flex items-center justify-between mb-4">
-                    <button className="bg-green-500 txt-white py-2 px-4 rounded-lg" onClick={handleStart}>
-                        Start
-                    </button>
-                    <button className="bg-red-500 txt-white py-2 px-4 rounded-lg" onClick={handleStop}>
-                        Stop
-                    </button>
-                    <button className="bg-yellow-500 txt-white py-2 px-4 rounded-lg" onClick={handleSingleAcquisition}>
-                        Single Acquisition
-                    </button>
-                </div>
-                <div className="mb-4">
-                    <label className="block mb-2 text-sm font-medium"> Sampling Rate (Hz): </label>
-                    <input
-                        type="number"
-                        value={samplingRate}
-                        onChange={handleSamplingRateChange}
-                        className="border p-2 rounded w-full"
-                    />
-                </div>
-                <div>
-                    <label className="block mb-2 text-sm font-medium">Trigger Type:</label>
-                    <select value={trigger} onChange={handleTriggerChange} className='border p-2 rounded w-full'>
-                        <option value="manual">Manual</option>
-                        <option value="auto">Auto</option>
-                    </select>
-                </div>
-            </div>
+         <div className="flex items-center justify-between w-full  py-2 px-4 text-white">
+      {/* Left: Acquisition Buttons */}
+      <div className="flex space-x-4">
+        <button className="bg-green-500 hover:bg-green-600 text-sm text-white py-1 px-3 rounded" onClick={handleStart}>
+          Start
+        </button>
+        <button className="bg-red-500 hover:bg-red-600 text-sm text-white py-1 px-3 rounded" onClick={handleStop}>
+          Stop
+        </button>
+        <button className="bg-yellow-500 hover:bg-yellow-600 text-sm text-white py-1 px-3 rounded" onClick={handleSingleAcquisition}>
+          Single Acquisition
+        </button>
+      </div>
+
+      {/* Right: Sampling Rate and Trigger */}
+      <div className="flex space-x-3 items-center">
+        <div className="flex items-center space-x-2">
+          <label htmlFor="samplingRate" className="text-sm">Sampling Rate (Hz):</label>
+          <input
+            id="samplingRate"
+            type="number"
+            value={samplingRate}
+            onChange={handleSamplingRateChange}
+            className="bg-gray-800 text-white px-2 py-1 rounded"
+          />
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <label htmlFor="trigger" className="text-sm">Trigger:</label>
+          <select
+            id="trigger"
+            value={trigger}
+            onChange={handleTriggerChange}
+            className="bg-gray-800 text-white px-2 py-1 rounded"
+          >
+            <option value="manual">Manual</option>
+            <option value="auto">Auto</option>
+          </select>
+        </div>
+      </div>
+    </div>
         </>
     );
 };

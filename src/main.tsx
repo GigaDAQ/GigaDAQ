@@ -4,6 +4,10 @@ import App from './App.tsx'
 import store from './store.ts';
 import './index.css'
 import { Provider } from 'react-redux';
+import { Buffer } from 'buffer';
+
+// Make Buffer global available
+window.Buffer = Buffer;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

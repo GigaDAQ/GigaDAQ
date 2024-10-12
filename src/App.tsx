@@ -1,94 +1,84 @@
-import React, { useEffect } from 'react';
-import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/react';
+import React, {  useEffect, useState } from 'react';
 import WaveformPlot from './components/WaveformPlot';
-import AcquisitionControls from './components/AcquisitionControls';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from './store';
-import {
-  startAcquisition,
-  stopAcquisition,
-  singleAcquisition,
-  setSamplingRate,
-  setTrigger,
-  updateData,
-} from './features/acquisitionSlice';
+import { useSelector } from 'react-redux';
+import { RootState } from './store';
 import Sidebar from './components/sidebar/Sidebar';
+import Toolbar from './components/toolbar/toolbar';
 
 const App: React.FC = () => {
-  const { data, samplingRate, isAcquiring } = useSelector((state: RootState) => state.acquisition);
-  const dispatch = useDispatch<AppDispatch>();
+  const [theme, setTheme] = useState<'light' | 'dark'>(() =>{
+    // Get theme from localStorage or default to light
+    const storedTheme = localStorage.getItem('item') as 'light' | 'dark';
+    return storedTheme || 'light';
+  });
 
-  const generateSampleData = (length: number, frequency: number, amplitude: number): number[] => {
-    const data = [];
-    for (let i = 0; i < length; i++) {
-      data.push(amplitude * Math.sin(2 * Math.PI * frequency * (i / length)));
-    }
-    return data;
-  };
+  const { data, samplingRate } = useSelector((state: RootState) => state.acquisition);
+
+  const [timeCenter, setTimeCenter] = useState<number>(0);
+  const [channelOffsets, setChannelOffsets] = useState<number[]>([0, 0]);
+  const [channelRanges, setChannelRanges] = useState<number[]>([1, 1]);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true); 
 
   useEffect(() => {
-    if (isAcquiring) {
-      const interval = setInterval(() => {
-        const newData = generateSampleData(1000, 5, 1);
-        dispatch(updateData(newData));
-      }, 1000 / samplingRate);
-
-      return () => clearInterval(interval);
+    if(theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  }, [isAcquiring, samplingRate, dispatch]);
+  },[theme]);
+
+  
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme); // Persist theme change in localStorage
+  };
+  
 
   return (
-//     <>
-//   <div className='grid grid-cols-2 gap-4'>
-//     <div className='bg-blue-200 p-4'>01</div>
-//     <div className='bg-green-200 p-4'>02</div>
-//     <div className='bg-red-200 p-4'>03</div>
-//     <div className='bg-yellow-200 p-4'>04</div>
-//   </div>
-// </>
 
    
-    <div className="h-screen flex">
-      <Sidebar />
-      <div className=" center-container flex-column"> 
-        <h1 className="text-2xl font-bold mb-4">Real-Time Waveform</h1>
 
-        <TabGroup>
-          <TabList className="flex space-x-4 mb-4">
-            <Tab as="button" className={({ selected }) => selected ? 'bg-blue-500 text-white px-4 py-2 rounded' : 'bg-gray-200 px-4 py-2 rounded'}>
-              Data Acquisition
-            </Tab>
-            <Tab as="button" className={({ selected }) => selected ? 'bg-blue-500 text-white px-4 py-2 rounded' : 'bg-gray-200 px-4 py-2 rounded'}>
-              Settings
-            </Tab>
-            <Tab as="button" className={({ selected }) => selected ? 'bg-blue-500 text-white px-4 py-2 rounded' : 'bg-gray-200 px-4 py-2 rounded'}>
-              Analytics
-            </Tab>
-          </TabList>
-
-          <TabPanels>
-            <TabPanel>
-              <div className="border rounded-lg h-96 full-width-container">
-                <WaveformPlot data={data} samplingRate={samplingRate} />
-              </div>
-              <AcquisitionControls 
-                onStart={() => dispatch(startAcquisition())}
-                onStop={() => dispatch(stopAcquisition())}
-                onSingleAcquisition={() => dispatch(singleAcquisition(generateSampleData(1000, 5, 1)))}
-                onSamplingRateChange={(rate) => dispatch(setSamplingRate(rate))}
-                onTriggerChange={(trigger) => dispatch(setTrigger(trigger))}
+     <div className="h-screen w-screen flex flex-col">
+      <div className="flex-1 flex flex-col"> 
+        <div className=" bg-gray-300  dark:bg-gray-800 text-black dark:text-white p-2">
+          <h1 className="text-xl font-bold">Scope Waveform</h1>
+          <Toolbar onThemeChange={handleThemeChange} currentTheme={theme}/>
+        </div>
+        {/* Waveform plot container */}
+        <div className="flex-1 flex relative">
+          <div className={`flex-1 p-4 ${sidebarOpen? 'mr-60': 'mr-16'}`}>
+            <div className='h-full'>
+              <WaveformPlot 
+                data={data}
+                samplingRate={samplingRate}
+                timeCenter={timeCenter}
+                channelOffsets= {channelOffsets}
+                channelRanges={channelRanges}
+                sidebarOpen={sidebarOpen}
               />
-            </TabPanel>
+            </div>  
+          </div>
+          {/* Sidebar that matches the plot's height */}
+          <div className="absolute top-0 bottom-0 right-0 h-full">
+            <Sidebar 
+              onTimeCenterChange={(center) => setTimeCenter(center)}
+              onOffsetChange={(channel, offset) => {
+                const updatedOffsets = [...channelOffsets];
+                updatedOffsets[channel] = offset;
+                setChannelOffsets(updatedOffsets);
+              }}
+              onRangeChange={(channel, range) => {
+                const updatedRanges = [...channelRanges];
+                updatedRanges[channel] = range;
+                setChannelRanges(updatedRanges);
+              }}
+              isOpen ={sidebarOpen}
+              setIsOpen= {setSidebarOpen}
+            />
+          </div>
 
-            <TabPanel>
-              <h2 className="text-lg font-semibold mb-4">Settings</h2>
-            </TabPanel>
-
-            <TabPanel>
-              <h2 className="text-lg font-semibold mb-4">Analytics</h2>
-            </TabPanel>
-          </TabPanels>
-        </TabGroup>
+        </div>
+        
       </div>
     </div>
   );

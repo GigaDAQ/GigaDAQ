@@ -1,64 +1,137 @@
 import React, { useState } from 'react';
-import { FiSettings } from 'react-icons/fi'; // Icon for settings
+// import { FiSettings } from 'react-icons/fi'; // Icon for settings
 
-const Sidebar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState<boolean>(true);
-  const [view, setView] = useState<string>('menu'); // Manage the current sidebar view
+interface SidebarProps{
+  onTimeCenterChange: (center: number) => void;
+  onOffsetChange: (channel: number, offset: number) => void;
+  onRangeChange: (channel: number, range: number) => void;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({
+  onTimeCenterChange,
+  onOffsetChange,
+  onRangeChange,
+  isOpen,
+  setIsOpen,
+}) => {
+  // const [isOpen, setIsOpen] = useState<boolean>(true);
+  // const [view, setView] = useState<string>('menu'); // Manage the current sidebar view
+  const [timeCenter, setTimeCenter] = useState<number>(0);
+  const [channelOffsets, setChannelOffsets] = useState<number[]>([0,0]);
+  const [channelRanges, setChannelRanges] = useState<number[]>([1,1]);
+
+  const handleTimeCenterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const center = parseFloat(e.target.value);
+    setTimeCenter(center);
+    onTimeCenterChange(center);
+  }
+
+  const handleChannelOffsetChange = (channel: number, e: React.ChangeEvent<HTMLInputElement>) =>{
+    const offset = parseFloat(e.target.value);
+    const updatedOffsets = [...channelOffsets];
+    updatedOffsets[channel] = offset;
+    setChannelOffsets(updatedOffsets);
+    onOffsetChange(channel, offset);
+  }
+  const handleChannelRangeChange = (channel: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const range = parseFloat(e.target.value);
+    const updatedRanges = [...channelRanges];
+    updatedRanges[channel] = range;
+    setChannelRanges(updatedRanges);
+    onRangeChange(channel, range); // Pass this to control range
+  };
+
 
   return (
     <div
       className={`transition-all duration-300 ${
         isOpen ? 'w-64' : 'w-16'
-      } bg-gray-800 text-white h-screen flex flex-col`}
+      }  h-full `}
     >
       {/* Sidebar Header */}
       <div className="p-4 flex items-center justify-between">
-        {view === 'menu' ? (
-          <h2 className={`${isOpen ? 'block' : 'hidden'} text-lg font-bold`}>Menu</h2>
-        ) : (
-          <h2 className={`${isOpen ? 'block' : 'hidden'} text-lg font-bold`}>Display Settings</h2>
-        )}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="text-white focus:outline-none"
-        >
-          {isOpen ? '⬅️' : '➡️'}
+        <h2 className={`${isOpen? 'block': 'hidden'} text-lg font-bold`}>Channel Controls</h2>
+        <button onClick={() => setIsOpen(!isOpen)} className=' focus:outline-none'>
+          {isOpen ? '➡️' : '⬅️'}
         </button>
       </div>
 
-      {/* Menu or Settings */}
-      {view === 'menu' ? (
-        <ul className="flex-grow">
-          <li
-            className="p-2 hover:bg-gray-700 flex items-center cursor-pointer"
-            onClick={() => setView('settings')}
-          >
-            <FiSettings className="text-lg" />
-            {isOpen && <span className="ml-4">Display Settings</span>}
-          </li>
-        </ul>
-      ) : (
-        <div className="p-4 flex-grow">
-          <p className="text-sm">Customize your display options here.</p>
-          <button
-            onClick={() => setView('menu')}
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-          >
-            Back to Menu
-          </button>
+      {/* Time Axis Center Control */}
+      {isOpen && (
+        <div className="p-4">
+          <h3 className="text-sm font-semibold mb-2">Time Axis Center</h3>
+          <input
+            type="number"
+            value={timeCenter}
+            onChange={handleTimeCenterChange}
+            className="bg-gray-700 text-white px-2 py-1 rounded w-full"
+          />
         </div>
       )}
 
-      {/* Expand/Collapse Button */}
-      <div className="p-2">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full text-white bg-gray-700 hover:bg-gray-600 py-2 rounded"
-        >
-          {isOpen ? 'Collapse' : 'Expand'}
-        </button>
-      </div>
+      {/* Channel 1 Controls */}
+      {isOpen && (
+        <div className="p-4">
+          <h3 className="text-sm font-semibold mb-2">Channel 1</h3>
+          <div className="mb-2">
+            <label className="text-xs">Offset (V):</label>
+            <input
+              type="number"
+              value={channelOffsets[0]}
+              onChange={(e) => handleChannelOffsetChange(0, e)}
+              className="bg-gray-700 text-white px-2 py-1 rounded w-full"
+            />
+          </div>
+          <div>
+            <label className="text-xs">Range (V/Div):</label>
+            <input
+              type="number"
+              value={channelRanges[0]}
+              onChange={(e) => handleChannelRangeChange(0, e)}
+              className="bg-gray-700 text-white px-2 py-1 rounded w-full"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Channel 2 Controls */}
+      {isOpen && (
+        <div className="p-4">
+          <h3 className="text-sm font-semibold mb-2">Channel 2</h3>
+          <div className="mb-2">
+            <label className="text-xs">Offset (V):</label>
+            <input
+              type="number"
+              value={channelOffsets[1]}
+              onChange={(e) => handleChannelOffsetChange(1, e)}
+              className="bg-gray-700 text-white px-2 py-1 rounded w-full"
+            />
+          </div>
+          <div>
+            <label className="text-xs">Range (V/Div):</label>
+            <input
+              type="number"
+              value={channelRanges[1]}
+              onChange={(e) => handleChannelRangeChange(1, e)}
+              className="bg-gray-700 text-white px-2 py-1 rounded w-full"
+            />
+          </div>
+        </div>
+      )}
     </div>
+
+    //   {/* Expand/Collapse Button */}
+    //   <div className="p-2">
+    //     <button
+    //       onClick={() => setIsOpen(!isOpen)}
+    //       className="w-full text-white bg-gray-700 hover:bg-gray-600 py-2 rounded"
+    //     >
+    //       {isOpen ? 'Collapse' : 'Expand'}
+    //     </button>
+    //   </div>
+    // </div>
   );
 };
 
