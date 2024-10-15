@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { Layout } from 'plotly.js';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -27,6 +27,11 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   const sineWave = data[0]?.length ? data[0] : Array(1000).fill(0);
   const squareWave = data[1]?.length ? data[1] : Array(1000).fill(0);
 
+  const [xRange, setXRange] = useState<[number, number]>([
+    timePosition - (5 * timeBase),
+    timePosition + (5 * timeBase),
+  ]);
+
   const totalLength = sineWave.length;
   // const time = Array.from({length: totalLength}, (_, i) => (i/samplingRate) * timeBase + timePosition);
   const time = Array.from({ length: totalLength }, (_, i) => (i / samplingRate) * timeBase);
@@ -54,6 +59,17 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   // Adjust the signal by applying the range (scaling) and offset (shifting)
   const adjustedSineWave = sineWave.map((val) => (val / channel1Range) + channel1Offset);
   const adjustedSquareWave = squareWave.map((val) => (val / channel2Range) + channel2Offset);
+
+    // Function to update range dynamically based on timePosition and timeBase
+  const updateXRange = () => {
+    const newXRangeStart = timePosition - (5 * timeBase); // 5 divisions to the left of timePosition
+    const newXRangeEnd = timePosition + (5 * timeBase);   // 5 divisions to the right of timePosition
+    setXRange([newXRangeStart, newXRangeEnd]);
+  };
+
+  useEffect(() => {
+    updateXRange();
+  }, [timePosition, timeBase]);
 
   return (
     <div className='plot bg-gray-100 dark:bg-gray-700 w-full h-full'>
@@ -84,9 +100,9 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
          autosize: true,
          xaxis: { 
           title: 'Time',
+          range: [xRangeStart,xRangeEnd],
           showgrid: true, 
           gridcolor: '#444', 
-          range: [xRangeStart, xRangeEnd],
           dtick: timeBase,
           ticklen: totalDivisions,
           tickwidth: 2,
@@ -104,7 +120,11 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
          yaxis: {
 
           title: 'Voltage',
-          range: [yRangeStart, yRangeEnd],
+          range: [
+            channelOffsets[0] - (5 * channelRanges[0]),
+            channelOffsets[0] + (5 * channelRanges[0]),
+          ], // Centered around the channel offset
+          // range: [yRangeStart, yRangeEnd],
           showgrid: true, 
           gridcolor: '#444',
           dtick: channel1Range,
@@ -119,60 +139,18 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
             gridcolor: '#111',
           }
         },
-        // xaxis: {
-        //   range: [-5, 5], // Range for 10 units on x-axis
-        //   dtick: 1, // Major tick every unit
-        //   ticklen: 10, // Length of major ticks
-        //   tickwidth: 2, // Width of major ticks
-        //   showgrid: true,
-        //   gridwidth: 0.5, // Minor grid line width
-        //   gridcolor: '#bdbdbd',
-        //   zeroline: false,
-        //   tick0: 0,
-        //   minor: {
-        //     dtick: 0.2, // Subdivision tick
-        //     ticklen: 5, // Length of minor ticks
-        //     gridwidth: 0.25,
-        //     gridcolor: '#111',
-        //   },
-        // },
-        // yaxis: {
-        //   range: [-5, 5], // Range for 10 units on y-axis
-        //   dtick: 1, // Major tick every unit
-        //   ticklen: 10, // Length of major ticks
-        //   tickwidth: 2, // Width of major ticks
-        //   showgrid: true,
-        //   gridwidth: 0.5, // Minor grid line width
-        //   gridcolor: '#bdbdbd',
-        //   zeroline: false,
-        //   tick0: 0,
-        //   minor: {
-        //     dtick: 0.2, // Subdivision tick
-        //     ticklen: 5, // Length of minor ticks
-        //     gridwidth: 0.25,
-        //     gridcolor: '#111',
-        //   },
-        // },
-        // shapes: [ // Line shapes for longer ticks at 0.5
-        //   {
-        //     type: 'line',
-        //     x0: -5,
-        //     x1: 5,
-        //     y0: 0,
-        //     y1: 0,
-        //     line: {
-        //       width: 2,
-        //       color: '#000',
-        //     },
-        //   },
-        // ],
-         paper_bgcolor: '#111',  // Dark background
-         plot_bgcolor: '#222',  // Dark plot area
-         font: { color: '#fff' },  // White text color
-         margin: { t: 40, r: 20, l: 50, b: 40 },
+        paper_bgcolor: '#111',  // Dark background
+        plot_bgcolor: '#222',  // Dark plot area
+        font: { color: '#fff' },  // White text color
+        margin: { t: 40, r: 20, l: 50, b: 40 },
        } as Layout}
        useResizeHandler
        style={{ width, height }}
+      //  onUpdate={(figure)=> {
+      //   // Update the xRange only when the user pans/zooms manually
+      //   const [newStart, newEnd] = figure.layout.xaxis.range;
+      //   setXRange([newStart, newEnd]);
+      //  }}
      /> 
       )}
       
