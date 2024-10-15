@@ -9,16 +9,16 @@ const Preferences: React.FC = () => {
       
       {/* Font Size Setting */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700">Font Size:</label>
+        <label className="block text-sm font-medium dark:text-white">Font Size:</label>
         <input
           type="number"
           value={fontSize}
           onChange={(e) => setFontSize(Number(e.target.value))}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          className="mt-1 dark:text-black block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         />
       </div>
 
-      <p className="text-sm text-gray-500">Adjust the default font size of the application.</p>
+      <p className="text-sm dark:text-gray-300">Adjust the default font size of the application.</p>
     </div>
   );
 };

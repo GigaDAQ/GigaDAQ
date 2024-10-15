@@ -28,7 +28,8 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   const squareWave = data[1]?.length ? data[1] : Array(1000).fill(0);
 
   const totalLength = sineWave.length;
-  const time = Array.from({length: totalLength}, (_, i) => (i/samplingRate) * timeBase + timePosition);
+  // const time = Array.from({length: totalLength}, (_, i) => (i/samplingRate) * timeBase + timePosition);
+  const time = Array.from({ length: totalLength }, (_, i) => (i / samplingRate) * timeBase);
 
   // Determine the initial view window (e.g., only show 1000 points at a time)
   const totalDivisions = 10; // 10 divisions on the x-axis
@@ -40,6 +41,19 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   const visibleStart = Math.max(0, timePosition);  // Start of the visible window
   const visibleEnd = visibleStart + visiblePoints / samplingRate * timeBase;  // End of the visible window
   
+  // Y-axis: Determine y-axis range based on channel 1's range and offset
+  const yDivisions = 10; // 10 divisions for the y-axis, similar to x-axis
+  const channel1Offset = channelOffsets[0];
+  const channel1Range = channelRanges[0];
+  const channel2Range = channelRanges[1];
+  const channel2Offset = channelOffsets[1];
+  const yHalfRange = (yDivisions / 2) * channel1Range; // Half range for channel 1
+  const yRangeStart = channel1Offset - yHalfRange;
+  const yRangeEnd = channel1Offset + yHalfRange;
+
+  // Adjust the signal by applying the range (scaling) and offset (shifting)
+  const adjustedSineWave = sineWave.map((val) => (val / channel1Range) + channel1Offset);
+  const adjustedSquareWave = squareWave.map((val) => (val / channel2Range) + channel2Offset);
 
   return (
     <div className='plot bg-gray-100 dark:bg-gray-700 w-full h-full'>
@@ -48,16 +62,18 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
        <Plot
        data={[
          {
-           x: time,
-           y: sineWave.map((val) => val * channelRanges[0] + channelOffsets[0]),
+           x: time.map(t => t + timePosition),
+           y: adjustedSineWave,
+          //  y: sineWave.map((val) => val * channelRanges[0] + channelOffsets[0]),
            type: 'scatter',
            mode: 'lines',
            line: { color: '#00ff00' },  // Green line color for dark mode
            name: 'Channel 1',
          },
          {
-           x: time,
-           y: squareWave.map((val) => val * channelRanges[1] + channelOffsets[1]),  // Apply channel 2 offset and range
+           x: time.map(t => t + timePosition),
+           y: adjustedSquareWave,
+          //  y: squareWave.map((val) => val * channelRanges[1] + channelOffsets[1]),  // Apply channel 2 offset and range
            type: 'scatter',
            mode: 'lines',
            line: { color: '#ff0000' },
@@ -88,11 +104,16 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
          yaxis: {
 
           title: 'Voltage',
+          range: [yRangeStart, yRangeEnd],
           showgrid: true, 
           gridcolor: '#444',
-          // dtick: 10,
+          dtick: channel1Range,
+          ticklen: yDivisions,
+          tickwidth: 2,
+          zeroline: false,
+
           minor: {
-            dtick: 0.1, // modify to math
+            dtick: 0.1 * channel1Range, // modify to math
             ticklen: 5,
             gridwidth: 0.25,
             gridcolor: '#111',

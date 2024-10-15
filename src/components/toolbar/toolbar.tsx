@@ -33,8 +33,8 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme}) => {
   useEffect(() => {
     if (isAcquiring) {
       const interval = setInterval(() => {
-        const newSine = generateSineWave(3000, 5, 1);
-        const newSquare = generateSquareWave(3000, 5, 1);
+        const newSine = generateSineWave(10000, 5, 1);
+        const newSquare = generateSquareWave(10000, 5, 1);
         const newData = [newSine, newSquare];
         dispatch(updateData(newData));
       }, 1000 / samplingRate);

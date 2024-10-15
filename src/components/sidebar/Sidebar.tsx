@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FiSettings } from 'react-icons/fi'; // Icon for settings
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarRightCollapse } from 'react-icons/tb';
 import CardSettingsMenu from './components/settings/CardSettingsMenu';
+import DropdownInput from './components/DropdownInput';
 
 interface SidebarProps{
   onTimePositionChange: (position: number) => void;
@@ -120,7 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <h3 className="p-1 text-xs font-semibold mb-1">Time Position</h3>
               <FiSettings className="cursor-pointer dark:text-gray-400" onClick={() => openSettings('time')}/>
             </div>
-            <input
+            {/* <input
               type="number"
               value={timePosition}
               onChange={handleTimePositionChange}
@@ -136,9 +137,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                   {pos}s
                 </option>
               ))}
-            </select>
+            </select> */}
+            <DropdownInput
+                value={timePosition}
+                onChange={(value) => {
+                  setTimePosition(value);
+                  onTimePositionChange(value);
+                }}
+                options={timePositions}
+                // label="Time Position"
+              />
             <h3 className="p-1 text-xs font-semibold mb-1">Time Base</h3>
-            <select
+            {/* <select
               value={timeBase}
               onChange={handleTimeBaseChange}
               className='bg-gray-700 text-white px-2 py-1 rounded w-full'
@@ -148,7 +158,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                   {base.label}
                 </option>
               ))}
-            </select>
+            </select> */}
+            <DropdownInput
+                value={timeBase}
+                onChange={(value) => {
+                  setTimeBase(value);
+                  onTimeBaseChange(value);
+                }}
+                options={timeBases}
+                // label="Time Base"
+              />
             {/* <input
               type="number"
               value={timeBase}

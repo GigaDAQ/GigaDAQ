@@ -26,7 +26,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = ({ currentTheme, onTheme
             <select
                 value={theme}
                 onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 dark:text-black block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             >
             <option value="light">Light Mode</option>
             <option value="dark">Dark Mode</option>
