@@ -18,11 +18,11 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = ({ currentTheme, onTheme
   }, [theme, onThemeChange]);
   
   return (
-    <div>
+    <div className='dark:bg-gray-700'>
       <h2 className="text-xl font-semibold mb-4">Display Settings</h2>
         {/* Theme Selection */}
         <div className="mb-4">
-            <label className="block text-sm font-medium">Theme:</label>
+            <label className="block text-sm text-black dark:text-white  font-medium">Theme:</label>
             <select
                 value={theme}
                 onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}

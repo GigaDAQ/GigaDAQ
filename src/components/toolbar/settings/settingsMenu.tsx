@@ -14,7 +14,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ onClose , currentTheme, onT
     return (
         <>
             <div className="fixed inset-0 z-50 bg-black bg-opacity-50">
-                <div className="absolute top-0 left-0 right-0 mx-auto mt-0 w-full md:w-3/5 bg-white rounded-lg shadow-lg transform transition-transform duration-300 ease-out translate-y-0 p-6">
+                <div className="absolute dark:bg-gray-700 top-0 left-0 right-0 mx-auto mt-0 w-full md:w-3/5 bg-white rounded-lg shadow-lg transform transition-transform duration-300 ease-out translate-y-0 p-6">
                 {/* Tabs */}
                     <div className="flex space-x-4 mb-6">
                         <button

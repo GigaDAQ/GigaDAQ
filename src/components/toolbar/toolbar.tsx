@@ -60,7 +60,7 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme}) => {
             <button className="text-white text-sm hover:text-gray-300">Triggers</button>
             <FiSettings
                 onClick={() => setShowSettings(true)} // Open the settings menu when clicked 
-                className=" text-sm cursor-pointer text-white hover:text-gray-300"
+                className=" cursor-pointer text-gray-700 hover:text-gray-300 dark:text-white"
             />
         </div>
         </div>

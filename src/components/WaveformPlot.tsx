@@ -19,8 +19,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     timePosition,
     timeBase,
     channelOffsets,
-    channelRanges,
-    sidebarOpen, 
+    channelRanges, 
   }
 ) => {
 
@@ -32,6 +31,11 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   const time = Array.from({length: totalLength}, (_, i) => (i/samplingRate) * timeBase + timePosition);
 
   // Determine the initial view window (e.g., only show 1000 points at a time)
+  const totalDivisions = 10; // 10 divisions on the x-axis
+  const halfRange = (totalDivisions / 2) * timeBase;
+  const xRangeStart = timePosition - halfRange;
+  const xRangeEnd = timePosition + halfRange;
+
   const visiblePoints = 1000;  // Number of points to display in the initial view
   const visibleStart = Math.max(0, timePosition);  // Start of the visible window
   const visibleEnd = visibleStart + visiblePoints / samplingRate * timeBase;  // End of the visible window
@@ -62,9 +66,85 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
        ]}
        layout={{
          autosize: true,
-         title: 'Real-Time Waveform',
-         xaxis: { title: 'Time (s)', showgrid: true, gridcolor: '#444', range: [visibleStart, visibleEnd] },  // Dark grid lines
-         yaxis: { title: 'Voltage (V)', showgrid: true, gridcolor: '#444' },
+         xaxis: { 
+          title: 'Time',
+          showgrid: true, 
+          gridcolor: '#444', 
+          range: [xRangeStart, xRangeEnd],
+          dtick: timeBase,
+          ticklen: totalDivisions,
+          tickwidth: 2,
+          gridwidth: 0.5, // Minor grid line width
+          zeroline: false,
+          tick0: 0,
+          minor: {
+            dtick: 0.1 * timeBase, // Subdivision tick
+            ticklen: 5, // Length of minor ticks
+            ticks: 'inside',
+            gridwidth: 0.25,
+            gridcolor: '#111',
+          },
+        }, 
+         yaxis: {
+
+          title: 'Voltage',
+          showgrid: true, 
+          gridcolor: '#444',
+          // dtick: 10,
+          minor: {
+            dtick: 0.1, // modify to math
+            ticklen: 5,
+            gridwidth: 0.25,
+            gridcolor: '#111',
+          }
+        },
+        // xaxis: {
+        //   range: [-5, 5], // Range for 10 units on x-axis
+        //   dtick: 1, // Major tick every unit
+        //   ticklen: 10, // Length of major ticks
+        //   tickwidth: 2, // Width of major ticks
+        //   showgrid: true,
+        //   gridwidth: 0.5, // Minor grid line width
+        //   gridcolor: '#bdbdbd',
+        //   zeroline: false,
+        //   tick0: 0,
+        //   minor: {
+        //     dtick: 0.2, // Subdivision tick
+        //     ticklen: 5, // Length of minor ticks
+        //     gridwidth: 0.25,
+        //     gridcolor: '#111',
+        //   },
+        // },
+        // yaxis: {
+        //   range: [-5, 5], // Range for 10 units on y-axis
+        //   dtick: 1, // Major tick every unit
+        //   ticklen: 10, // Length of major ticks
+        //   tickwidth: 2, // Width of major ticks
+        //   showgrid: true,
+        //   gridwidth: 0.5, // Minor grid line width
+        //   gridcolor: '#bdbdbd',
+        //   zeroline: false,
+        //   tick0: 0,
+        //   minor: {
+        //     dtick: 0.2, // Subdivision tick
+        //     ticklen: 5, // Length of minor ticks
+        //     gridwidth: 0.25,
+        //     gridcolor: '#111',
+        //   },
+        // },
+        // shapes: [ // Line shapes for longer ticks at 0.5
+        //   {
+        //     type: 'line',
+        //     x0: -5,
+        //     x1: 5,
+        //     y0: 0,
+        //     y1: 0,
+        //     line: {
+        //       width: 2,
+        //       color: '#000',
+        //     },
+        //   },
+        // ],
          paper_bgcolor: '#111',  // Dark background
          plot_bgcolor: '#222',  // Dark plot area
          font: { color: '#fff' },  // White text color
