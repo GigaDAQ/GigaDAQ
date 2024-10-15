@@ -1,50 +1,71 @@
-# React + TypeScript + Vite
+# Electron React Plotly App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is an Electron-based app built with React for the frontend and Plotly.js for data visualization. It provides a custom oscilloscope-like plotting layout using Plotly.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Electron** for desktop application support.
+- **React** for building the user interface.
+- **Plotly.js** for rendering data visualizations.
+- **Vite** for fast development and build tooling.
+- **TailwindCSS** for styling.
 
-## Expanding the ESLint configuration
+## Prerequisites
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- **Node.js**: Make sure you have Node.js installed. You can download it from [Node.js official site](https://nodejs.org/).
+- **npm**: Ensure npm is installed, which comes bundled with Node.js.
 
-- Configure the top-level `parserOptions` property like this:
+## Installation
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+1. Clone the repository:
+   ```bash
+   git clone 
+   cd electron-react-app```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+2. Install Dependencies:
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+    ```bash
+    npm install```
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+3. Start developement server:
+    ```bash
+    npm run dev```
+
+This will:
+- Start Vite for the React frontend developement.
+- Launch the Electron app after Vite builds the frontend
+
+4. Build project
+    ```bash
+    npm run build```
+
+
+5. Scripts:
+
+npm run start: Starts the Vite server.
+npm run dev: Concurrently starts Vite and Electron for development.
+npm run build: Builds the project using TypeScript and Vite.
+npm run lint: Runs ESLint on the project.
+npm run preview: Previews the Vite build.
+
+6. Dependencies:
+
+- **React**: UI library for building the app.
+- **Electron**: For packaging the app as a desktop application.
+- **Plotly.js**: For interactive plots and graphs.
+- **Redux Toolkit**: For state management.
+- **TailwindCSS**: For styling.
+- **Vite**: For fast bundling and development.
+
+7. Dev Dependencies:
+
+- **TypeScript**:  For type-checking.
+- **ESLint**: For linting the code.
+- **Electron**: For building cross-platform desktop apps.
+
+
+
+
+8. License:
+
+This project is licensed under the MIT license. See the LICENSE file for more details.
