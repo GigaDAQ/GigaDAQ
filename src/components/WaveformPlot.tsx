@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { Layout } from 'plotly.js';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import VoltageOffsetIndicator from './waveform/components/VoltageOffsetIndicator';
+import YAxisControl from './waveform/components/YAxisControl';
 
 interface WaveformPlotProps {
   data: number[][];
@@ -23,6 +25,9 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   }
 ) => {
 
+  const [activeChannel, setActiveChannel] = useState<number>(0);
+  const [expandYAxes, setExpandYAxes] = useState<boolean>(false);
+
   // Safegaurd to ensure data is not empty
   const sineWave = data[0]?.length ? data[0] : Array(1000).fill(0);
   const squareWave = data[1]?.length ? data[1] : Array(1000).fill(0);
@@ -38,9 +43,6 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
 
   // Determine the initial view window (e.g., only show 1000 points at a time)
   const totalDivisions = 10; // 10 divisions on the x-axis
-  const halfRange = (totalDivisions / 2) * timeBase;
-  const xRangeStart = timePosition - halfRange;
-  const xRangeEnd = timePosition + halfRange;
 
   const visiblePoints = 1000;  // Number of points to display in the initial view
   const visibleStart = Math.max(0, timePosition);  // Start of the visible window
@@ -53,8 +55,13 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   const channel2Range = channelRanges[1];
   const channel2Offset = channelOffsets[1];
   const yHalfRange = (yDivisions / 2) * channel1Range; // Half range for channel 1
-  const yRangeStart = channel1Offset - yHalfRange;
-  const yRangeEnd = channel1Offset + yHalfRange;
+  // const yRangeStart = channel1Offset - yHalfRange;
+  // const yRangeEnd = channel1Offset + yHalfRange;
+
+  const yRange = [
+    channelOffsets[activeChannel] - 5 * channelRanges[activeChannel],
+    channelOffsets[activeChannel] + 5 * channelRanges[activeChannel],
+  ];
 
   // Adjust the signal by applying the range (scaling) and offset (shifting)
   const adjustedSineWave = sineWave.map((val) => (val / channel1Range) + channel1Offset);
@@ -68,17 +75,43 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   };
 
   useEffect(() => {
+    setXRange([
+      timePosition - 5 * timeBase,
+      timePosition + 5 * timeBase,
+    ]);
+  }, [timePosition, timeBase]);
+
+  useEffect(() => {
     updateXRange();
   }, [timePosition, timeBase]);
 
   return (
-    <div className='plot bg-gray-100 dark:bg-gray-700 w-full h-full'>
+    <div className='plot-container relative bg-gray-100 dark:bg-gray-700 w-full h-full'>
+      <YAxisControl
+        activeChannel={activeChannel}
+        setActiveChannel={setActiveChannel}
+        expandYAxes={expandYAxes}
+        setExpandYAxes={setExpandYAxes}
+        channelColors={['#00ff00', '#ff0000']}
+      />
+      {/*Voltage Offset Indicators*/}
+      {
+        channelOffsets.map((offset, index) =>(
+          <VoltageOffsetIndicator
+            key={index}
+            offset={offset}
+            color={index === 0 ? '#00ff00' : '#ff0000'}
+            yRange={yRange}
+            height={100} // Assuming the height is 100% of plot aread
+          ></VoltageOffsetIndicator>
+        ))
+      }
     <AutoSizer>
       {({height, width}) =>(
        <Plot
        data={[
          {
-           x: time.map(t => t + timePosition),
+           x: time.map(t => t/timeBase + timePosition),
            y: adjustedSineWave,
           //  y: sineWave.map((val) => val * channelRanges[0] + channelOffsets[0]),
            type: 'scatter',
@@ -87,7 +120,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
            name: 'Channel 1',
          },
          {
-           x: time.map(t => t + timePosition),
+           x: time.map(t => t/timeBase + timePosition),
            y: adjustedSquareWave,
           //  y: squareWave.map((val) => val * channelRanges[1] + channelOffsets[1]),  // Apply channel 2 offset and range
            type: 'scatter',
@@ -100,7 +133,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
          autosize: true,
          xaxis: { 
           title: 'Time',
-          range: [xRangeStart,xRangeEnd],
+          range: xRange,
           showgrid: true, 
           gridcolor: '#444', 
           dtick: timeBase,
@@ -119,15 +152,16 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
         }, 
          yaxis: {
 
-          title: 'Voltage',
-          range: [
-            channelOffsets[0] - (5 * channelRanges[0]),
-            channelOffsets[0] + (5 * channelRanges[0]),
-          ], // Centered around the channel offset
+          title: expandYAxes ? `Voltage (Channels 1 & 2)` : `Voltage (Channel ${activeChannel + 1})`,
+          range: yRange,
+          // [
+          //   channelOffsets[0] - (5 * channelRanges[0]),
+          //   channelOffsets[0] + (5 * channelRanges[0]),
+          // ], // Centered around the channel offset
           // range: [yRangeStart, yRangeEnd],
           showgrid: true, 
           gridcolor: '#444',
-          dtick: channel1Range,
+          dtick: channelRanges[activeChannel],
           ticklen: yDivisions,
           tickwidth: 2,
           zeroline: false,
@@ -143,7 +177,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
         plot_bgcolor: '#222',  // Dark plot area
         font: { color: '#fff' },  // White text color
         margin: { t: 40, r: 20, l: 50, b: 40 },
-       } as Layout}
+       } as Partial<Layout>}
        useResizeHandler
        style={{ width, height }}
       //  onUpdate={(figure)=> {

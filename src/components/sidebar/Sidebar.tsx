@@ -20,9 +20,9 @@ const timeBases = [
   { label: '2 ns/div', value: 2e-9 },
   { label: '5 ns/div', value: 5e-9 },
   { label: '10 ns/div', value: 1e-8 },
-  { label: '1 ms/div', value: 1e-3 },
-  { label: '2 ms/div', value: 2e-3 },
-  { label: '5 ms/div', value: 5e-3 },
+  { label: '10 ms/div', value: 1e-2 },
+  { label: '200 ms/div', value: 2e-1 },
+  { label: '500 ms/div', value: 5e-1 },
   { label: '1 s/div', value: 1 },
   { label: '2 s/div', value: 2 },
   { label: '5 s/div', value: 5 },
@@ -82,7 +82,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     onOffsetChange(channel, offset);
   }
   const handleChannelRangeChange = (channel: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const range = parseFloat(e.target.value);
+    let range = parseFloat(e.target.value);
+    // Prevent the range from being set to 0
+    if ( range == 0) {
+      range =1; // Reset it to 1 if 0 or -negative is entered
+    }
     const updatedRanges = [...channelRanges];
     updatedRanges[channel] = range;
     setChannelRanges(updatedRanges);
