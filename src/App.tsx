@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [channelOffsets, setChannelOffsets] = useState<number[]>([0, 0]);
   const [channelRanges, setChannelRanges] = useState<number[]>([1, 1]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true); 
+  const [activeChannel, setActiveChannel] = useState<number>(0); // New active channel state
 
   useEffect(() => {
     if(theme === 'dark') {
@@ -57,6 +58,8 @@ const App: React.FC = () => {
                 channelOffsets= {channelOffsets}
                 channelRanges={channelRanges}
                 sidebarOpen={sidebarOpen}
+                activeChannel={activeChannel}
+                setActiveChannel={setActiveChannel}
               />
             </div>  
           </div>
@@ -77,6 +80,8 @@ const App: React.FC = () => {
               }}
               isOpen ={sidebarOpen}
               setIsOpen= {setSidebarOpen}
+              activeChannel={activeChannel} // Pass activeChannel to Sidebar
+              setActiveChannel={setActiveChannel} // Pass setActiveChannel to Sidebar
             />
           </div>
 

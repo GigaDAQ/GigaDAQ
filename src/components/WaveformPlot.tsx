@@ -13,6 +13,8 @@ interface WaveformPlotProps {
   channelOffsets: number[];
   channelRanges: number[];
   sidebarOpen: boolean;
+  activeChannel: number;
+  setActiveChannel: (channel: number) => void;
 }
 
 const WaveformPlot: React.FC<WaveformPlotProps> = (
@@ -22,10 +24,12 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     timeBase,
     channelOffsets,
     channelRanges, 
+    activeChannel,
+    setActiveChannel,
   }
 ) => {
 
-  const [activeChannel, setActiveChannel] = useState<number>(0);
+  // const [activeChannel, setActiveChannel] = useState<number>(0);
   const [expandYAxes, setExpandYAxes] = useState<boolean>(false);
 
   // Safegaurd to ensure data is not empty
@@ -58,9 +62,15 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   // const yRangeStart = channel1Offset - yHalfRange;
   // const yRangeEnd = channel1Offset + yHalfRange;
 
+  // const yRange = [
+  //   channelOffsets[activeChannel] - 5 * channelRanges[activeChannel],
+  //   channelOffsets[activeChannel] + 5 * channelRanges[activeChannel],
+  // ];
+
+  // Y-Axis range based on offsets without re-centering
   const yRange = [
-    channelOffsets[activeChannel] - 5 * channelRanges[activeChannel],
-    channelOffsets[activeChannel] + 5 * channelRanges[activeChannel],
+    Math.min(...channelOffsets.map((offset, index) => offset - 5 * channelRanges[index])),
+    Math.max(...channelOffsets.map((offset, index) => offset + 5 * channelRanges[index])),
   ];
 
   // Adjust the signal by applying the range (scaling) and offset (shifting)
@@ -73,6 +83,10 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     const newXRangeEnd = timePosition + (5 * timeBase);   // 5 divisions to the right of timePosition
     setXRange([newXRangeStart, newXRangeEnd]);
   };
+
+  // Change to make variable instead of hardcoded
+  const channelColors = ['#00ff00', '#ff0000'];
+
 
   useEffect(() => {
     setXRange([
@@ -102,7 +116,9 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
             offset={offset}
             color={index === 0 ? '#00ff00' : '#ff0000'}
             yRange={yRange}
-            height={100} // Assuming the height is 100% of plot aread
+            height={100} // Assuming the height is 100% of plot aread,
+            onClick={() => setActiveChannel(index)}
+            isActive={index === activeChannel}
           ></VoltageOffsetIndicator>
         ))
       }
@@ -116,7 +132,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
           //  y: sineWave.map((val) => val * channelRanges[0] + channelOffsets[0]),
            type: 'scatter',
            mode: 'lines',
-           line: { color: '#00ff00' },  // Green line color for dark mode
+           line: { color: '#00ff00', width: activeChannel === 0 ? 3 : 1.5 }, // Highlight active channel
            name: 'Channel 1',
          },
          {
@@ -125,7 +141,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
           //  y: squareWave.map((val) => val * channelRanges[1] + channelOffsets[1]),  // Apply channel 2 offset and range
            type: 'scatter',
            mode: 'lines',
-           line: { color: '#ff0000' },
+           line: { color: '#ff0000', width: activeChannel === 1 ? 3 : 1.5 }, // Highlight active channel
            name: 'Channel 2',
          }
        ]}
@@ -154,18 +170,15 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
 
           title: expandYAxes ? `Voltage (Channels 1 & 2)` : `Voltage (Channel ${activeChannel + 1})`,
           range: yRange,
-          // [
-          //   channelOffsets[0] - (5 * channelRanges[0]),
-          //   channelOffsets[0] + (5 * channelRanges[0]),
-          // ], // Centered around the channel offset
-          // range: [yRangeStart, yRangeEnd],
           showgrid: true, 
-          gridcolor: '#444',
+          gridcolor: channelOffsets.length > 1 ? '#888' : channelColors[activeChannel],
           dtick: channelRanges[activeChannel],
           ticklen: yDivisions,
           tickwidth: 2,
           zeroline: false,
-
+          tickfont: {
+            color: channelColors[activeChannel], // Set y-axis label color to match the active channel
+          },
           minor: {
             dtick: 0.1 * channel1Range, // modify to math
             ticklen: 5,

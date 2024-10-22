@@ -1,4 +1,4 @@
-import react from 'react';
+import React from 'react';
 
 
 interface VoltageOffsetIndicatorProps{
@@ -6,12 +6,16 @@ interface VoltageOffsetIndicatorProps{
     yRange: number[];
     height: number;
     color: string;
+    onClick: () => void;
+    isActive: boolean;
 }
 const VoltageOffsetIndicator: React.FC<VoltageOffsetIndicatorProps> = ({ 
     offset,
     color,
     height,
-    yRange,    
+    yRange,  
+    onClick,  
+    isActive,
 }) => {
 
     const [yMin, yMax] = yRange;
@@ -19,7 +23,8 @@ const VoltageOffsetIndicator: React.FC<VoltageOffsetIndicatorProps> = ({
     return (
         <>
             <div
-            className='absolute'
+            className={`absolute cursor-pointer ${isActive ? 'border-4 border-white' : ''}`} // to indicate clickability
+            onClick={onClick}
             style={{
                 zIndex: 50,
                 top: `${100 - positionPercentage}%`, // Adjust positioning based on the offset

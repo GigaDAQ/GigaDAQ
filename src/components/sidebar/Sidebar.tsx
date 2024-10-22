@@ -11,6 +11,8 @@ interface SidebarProps{
   onRangeChange: (channel: number, range: number) => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  activeChannel: number;
+  setActiveChannel: (channel: number) => void;
 }
 
 // Available time position and time bases
@@ -37,6 +39,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onRangeChange,
   isOpen,
   setIsOpen,
+  activeChannel,
+  setActiveChannel,
 }) => {
   // const [isOpen, setIsOpen] = useState<boolean>(true);
   // const [view, setView] = useState<string>('menu'); // Manage the current sidebar view
@@ -125,23 +129,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               <h3 className="p-1 text-xs font-semibold mb-1">Time Position</h3>
               <FiSettings className="cursor-pointer dark:text-gray-400" onClick={() => openSettings('time')}/>
             </div>
-            {/* <input
-              type="number"
-              value={timePosition}
-              onChange={handleTimePositionChange}
-              className="bg-gray-700 text-white px-2 py-1 rounded w-full mb-1 text-xs h-6"
-            />
-            <select
-              value={timePosition}
-              onChange={handleTimePositionSelectChange}
-              className="bg-gray-700 text-white px-2 py-1 rounded w-full"
-            >
-              {timePositions.map((pos) => (
-                <option key={pos} value={pos}>
-                  {pos}s
-                </option>
-              ))}
-            </select> */}
             <DropdownInput
                 value={timePosition}
                 onChange={(value) => {
@@ -152,17 +139,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 // label="Time Position"
               />
             <h3 className="p-1 text-xs font-semibold mb-1">Time Base</h3>
-            {/* <select
-              value={timeBase}
-              onChange={handleTimeBaseChange}
-              className='bg-gray-700 text-white px-2 py-1 rounded w-full'
-            >
-              {timeBases.map((base) =>(
-                <option key={base.label} value={base.value}>
-                  {base.label}
-                </option>
-              ))}
-            </select> */}
             <DropdownInput
                 value={timeBase}
                 onChange={(value) => {
@@ -170,20 +146,66 @@ const Sidebar: React.FC<SidebarProps> = ({
                   onTimeBaseChange(value);
                 }}
                 options={timeBases}
-                // label="Time Base"
               />
-            {/* <input
-              type="number"
-              value={timeBase}
-              onChange={handleTimeBaseChange}
-              className="bg-gray-700 text-white px-2 py-1 rounded w-full text-xs h-6"
-            /> */}
           </div>
         </>
         )}
 
+        {/* Channel Controls */}
+        {isOpen && 
+          [0,1].map((channelIndex) =>(
+              <div
+                key={channelIndex}
+                className={`p-2 dark:bg-gray-800 border border-gray-600 shadow-sm rounded mb-1 ${
+                  activeChannel === channelIndex
+                    ? 'border-2 border-white shadow-lg transform scale-105' // Highlight active channel card
+                    : ''
+                }`}
+                onClick={() => setActiveChannel(channelIndex)}
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <h3 className="text-xs font-semibold">{`Channel ${
+                    channelIndex + 1
+                  }`}</h3>
+                  <div className="flex items-center">
+                    <span
+                      className={`block w-2 h-2 rounded-full mr-2 ${
+                        activeChannel === channelIndex
+                          ? 'border-2 border-white' // Emphasize active channel color dot
+                          : ''
+                      }`}
+                      style={{ backgroundColor: channelColors[channelIndex] }}
+                    ></span>
+                    <FiSettings
+                      className="cursor-pointer dark:text-gray-400"
+                      onClick={() => openSettings(`ch${channelIndex + 1}`)}
+                    />
+                  </div>
+                </div>
+                <div className="mb-1">
+                  <label className="text-xs">Offset (V):</label>
+                  <input
+                    type="number"
+                    value={channelOffsets[channelIndex]}
+                    onChange={(e) => handleChannelOffsetChange(channelIndex, e)}
+                    className="bg-gray-700 text-white px-2 py-1 rounded w-full text-xs h-6"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs">Range (V/Div):</label>
+                  <input
+                    type="number"
+                    value={channelRanges[channelIndex]}
+                    onChange={(e) => handleChannelRangeChange(channelIndex, e)}
+                    className="bg-gray-700 text-white px-2 py-1 rounded w-full text-xs h-6"
+                  />
+                </div>
+              </div>
+          ))
+        }
+
         {/* Channel 1 Controls */}
-        {isOpen && (
+        {/* {isOpen && (
           <>
           <div className="p-2 dark:bg-gray-800 border border-gray-600 shadow-sm rounded mb-1">
             <div className="flex justify-between items-center mb-1">
@@ -217,10 +239,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
           </>
-        )}
+        )} */}
 
         {/* Channel 2 Controls */}
-        {isOpen && (
+        {/* {isOpen && (
           <>
             <div className="p-2 dark:bg-gray-800 border border-gray-600 rounded shadow-smmb-1">
               <div className="flex justify-between items-center mb-1">
@@ -254,7 +276,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
           </>
-        )}
+        )} */}
 
       </div>
       {showSettings &&(
