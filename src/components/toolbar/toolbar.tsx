@@ -16,18 +16,23 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme}) => {
   const dispatch = useDispatch<AppDispatch>();
   const [showSettings, setShowSettings] = useState<Boolean>(false);
   const { data, samplingRate, isAcquiring } = useSelector((state: RootState) => state.acquisition);
-  const generateSineWave = (length:number, frequency: number, amplitude: number): number[] => {
-    return Array.from({length}, (_, i) => amplitude * Math.sin(2 * Math.PI * frequency * (i/length)));
+
+  const generateSineWave = (length:number, frequency: number, amplitude: number):{time: number, value: number}[] => {
+    const timeStep = 1 / samplingRate; // Calculate thee time step based on sampling rate
+    return Array.from({length}, (_, i) => {
+      const time = (i - length/2) * timeStep; // Center around time = 0
+      const value = amplitude * Math.sin(2 * Math.PI * frequency * (i/length));
+      return {time, value};
+    });
   }
-//   const generateSampleData = (length: number, frequency: number, amplitude: number): number[] => {
-//     const data = [];
-//     for (let i = 0; i < length; i++) {
-//       data.push(amplitude * Math.sin(2 * Math.PI * frequency * (i / length)));
-//     }
-//     return data;
-//   };
-  const generateSquareWave = (length: number, frequency: number, amplitude: number): number[] => {
-    return Array.from({ length }, (_, i) => (Math.sin(2 * Math.PI * frequency * (i / length)) >= 0 ? amplitude : -amplitude));
+  const generateSquareWave = (length: number, frequency: number, amplitude: number): {time: number, value: number}[] => {
+    const timeStep = 1/samplingRate; // Calculate the time step based on sampling rate
+    return Array.from({ length }, (_, i) => {
+      const time = (i - length / 2) * timeStep;
+      const value = Math.sin(2 * Math.PI * frequency * (i/length)) >= 0 ? amplitude : -amplitude;
+      return { time, value };
+  
+    });
   };
 
   useEffect(() => {

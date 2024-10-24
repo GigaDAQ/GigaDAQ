@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const [channelRanges, setChannelRanges] = useState<number[]>([1, 1]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true); 
   const [activeChannel, setActiveChannel] = useState<number>(0); // New active channel state
+  const [expandYAxes, setExpandYAxes] = useState<boolean>(false);
 
   useEffect(() => {
     if(theme === 'dark') {
@@ -60,6 +61,8 @@ const App: React.FC = () => {
                 sidebarOpen={sidebarOpen}
                 activeChannel={activeChannel}
                 setActiveChannel={setActiveChannel}
+                expandYAxes= {expandYAxes}
+                setExpandYAxes={setExpandYAxes}
               />
             </div>  
           </div>

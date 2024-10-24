@@ -158,7 +158,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 key={channelIndex}
                 className={`p-2 dark:bg-gray-800 border border-gray-600 shadow-sm rounded mb-1 ${
                   activeChannel === channelIndex
-                    ? 'border-2 border-white shadow-lg transform scale-105' // Highlight active channel card
+                    ? `shadow-lg transform scale-100
+                       bg-gradient-to-b from-gray-300 to-gray-200 dark:bg-gradient-to-b dark:from-gray-700 dark:to-gray-800` // Highlight active channel card
                     : ''
                 }`}
                 onClick={() => setActiveChannel(channelIndex)}

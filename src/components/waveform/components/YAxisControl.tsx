@@ -23,7 +23,7 @@ const YAxisControl: React.FC<YAxisControlProps> =({
                         expandYAxes ? '' : 'cursor-pointer'
                     }`}
                     style={{backgroundColor: channelColors[activeChannel] }}
-                    onClick={() => !expandYAxes && setExpandYAxes(true)}
+                    onClick={() => setExpandYAxes(!expandYAxes)}
                 >
                     {`C${activeChannel + 1} V`}
 
@@ -33,7 +33,9 @@ const YAxisControl: React.FC<YAxisControlProps> =({
                         {channelColors.map((color, index) => (
                             <div
                                 key={index}
-                                className={`px-1 py-0.5 bg-gray-800 text-white rounded cursor-pointer`}
+                                className={`px-1 py-0.5 bg-gray-800 text-white rounded cursor-pointer ${
+                                    activeChannel === index? 'font-bold': ''
+                                }`}
                                 style={{ backgroundColor: color }}
                                 onClick={() => setActiveChannel(index)}
                             >

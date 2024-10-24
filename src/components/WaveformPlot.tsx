@@ -5,8 +5,13 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import VoltageOffsetIndicator from './waveform/components/VoltageOffsetIndicator';
 import YAxisControl from './waveform/components/YAxisControl';
 
+interface DataPoint{
+  time: number;
+  value: number;
+}
+
 interface WaveformPlotProps {
-  data: number[][];
+  data: DataPoint[][];
   samplingRate: number;
   timePosition: number;
   timeBase: number;
@@ -15,6 +20,8 @@ interface WaveformPlotProps {
   sidebarOpen: boolean;
   activeChannel: number;
   setActiveChannel: (channel: number) => void;
+  expandYAxes: boolean;
+  setExpandYAxes: (expand: boolean) => void;
 }
 
 const WaveformPlot: React.FC<WaveformPlotProps> = (
@@ -26,15 +33,14 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     channelRanges, 
     activeChannel,
     setActiveChannel,
+    expandYAxes,
+    setExpandYAxes,
   }
 ) => {
 
-  // const [activeChannel, setActiveChannel] = useState<number>(0);
-  const [expandYAxes, setExpandYAxes] = useState<boolean>(false);
-
   // Safegaurd to ensure data is not empty
-  const sineWave = data[0]?.length ? data[0] : Array(1000).fill(0);
-  const squareWave = data[1]?.length ? data[1] : Array(1000).fill(0);
+  const sineWave: DataPoint[] = data[0]?.length ? data[0] : Array(1000).fill({time: 0, value: 0});
+  const squareWave: DataPoint[] = data[1]?.length ? data[1] : Array(1000).fill({time: 0, value: 0});
 
   const [xRange, setXRange] = useState<[number, number]>([
     timePosition - (5 * timeBase),
@@ -45,12 +51,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   // const time = Array.from({length: totalLength}, (_, i) => (i/samplingRate) * timeBase + timePosition);
   const time = Array.from({ length: totalLength }, (_, i) => (i / samplingRate) * timeBase);
 
-  // Determine the initial view window (e.g., only show 1000 points at a time)
-  const totalDivisions = 10; // 10 divisions on the x-axis
-
-  const visiblePoints = 1000;  // Number of points to display in the initial view
-  const visibleStart = Math.max(0, timePosition);  // Start of the visible window
-  const visibleEnd = visibleStart + visiblePoints / samplingRate * timeBase;  // End of the visible window
+  const totalDivisions = 10; 
   
   // Y-axis: Determine y-axis range based on channel 1's range and offset
   const yDivisions = 10; // 10 divisions for the y-axis, similar to x-axis
@@ -58,24 +59,22 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   const channel1Range = channelRanges[0];
   const channel2Range = channelRanges[1];
   const channel2Offset = channelOffsets[1];
-  const yHalfRange = (yDivisions / 2) * channel1Range; // Half range for channel 1
-  // const yRangeStart = channel1Offset - yHalfRange;
-  // const yRangeEnd = channel1Offset + yHalfRange;
 
   // const yRange = [
-  //   channelOffsets[activeChannel] - 5 * channelRanges[activeChannel],
-  //   channelOffsets[activeChannel] + 5 * channelRanges[activeChannel],
+  //   Math.min(...channelOffsets.map((offset, index) => offset - 5 * channelRanges[index])),
+  //   Math.max(...channelOffsets.map((offset, index) => offset + 5 * channelRanges[index])),
   // ];
 
-  // Y-Axis range based on offsets without re-centering
+  // To do : make the plot not shift rather just the signal and signal values
+
   const yRange = [
-    Math.min(...channelOffsets.map((offset, index) => offset - 5 * channelRanges[index])),
-    Math.max(...channelOffsets.map((offset, index) => offset + 5 * channelRanges[index])),
-  ];
+    channelOffsets[activeChannel] - 5,
+    channelOffsets[activeChannel] + 5
+  ]
 
   // Adjust the signal by applying the range (scaling) and offset (shifting)
-  const adjustedSineWave = sineWave.map((val) => (val / channel1Range) + channel1Offset);
-  const adjustedSquareWave = squareWave.map((val) => (val / channel2Range) + channel2Offset);
+  const adjustedSineWave = sineWave.map(({value}) => (value / channel1Range) + channel1Offset);
+  const adjustedSquareWave = squareWave.map(({value}) => (value / channel2Range) + channel2Offset);
 
     // Function to update range dynamically based on timePosition and timeBase
   const updateXRange = () => {
@@ -127,18 +126,16 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
        <Plot
        data={[
          {
-           x: time.map(t => t/timeBase + timePosition),
+           x: sineWave.map(point => point.time),
            y: adjustedSineWave,
-          //  y: sineWave.map((val) => val * channelRanges[0] + channelOffsets[0]),
            type: 'scatter',
            mode: 'lines',
            line: { color: '#00ff00', width: activeChannel === 0 ? 3 : 1.5 }, // Highlight active channel
            name: 'Channel 1',
          },
          {
-           x: time.map(t => t/timeBase + timePosition),
+           x: squareWave.map(point => point.time),
            y: adjustedSquareWave,
-          //  y: squareWave.map((val) => val * channelRanges[1] + channelOffsets[1]),  // Apply channel 2 offset and range
            type: 'scatter',
            mode: 'lines',
            line: { color: '#ff0000', width: activeChannel === 1 ? 3 : 1.5 }, // Highlight active channel
@@ -165,7 +162,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
             gridwidth: 0.25,
             gridcolor: '#111',
           },
-        }, 
+         }, 
          yaxis: {
 
           title: expandYAxes ? `Voltage (Channels 1 & 2)` : `Voltage (Channel ${activeChannel + 1})`,
@@ -185,6 +182,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
             gridwidth: 0.25,
             gridcolor: '#111',
           }
+
         },
         paper_bgcolor: '#111',  // Dark background
         plot_bgcolor: '#222',  // Dark plot area
@@ -193,11 +191,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
        } as Partial<Layout>}
        useResizeHandler
        style={{ width, height }}
-      //  onUpdate={(figure)=> {
-      //   // Update the xRange only when the user pans/zooms manually
-      //   const [newStart, newEnd] = figure.layout.xaxis.range;
-      //   setXRange([newStart, newEnd]);
-      //  }}
+      
      /> 
       )}
       
