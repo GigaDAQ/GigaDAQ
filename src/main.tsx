@@ -6,6 +6,8 @@ import './index.css'
 import { Provider } from 'react-redux';
 import { Buffer } from 'buffer';
 
+// // Polyfill for 'global' in the browser
+// (window as any).global = window;
 // Make Buffer global available
 window.Buffer = Buffer;
 

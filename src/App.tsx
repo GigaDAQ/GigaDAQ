@@ -49,7 +49,7 @@ const App: React.FC = () => {
         </div>
         {/* Waveform plot container */}
         <div className="flex-1 flex relative">
-          <div className={`flex-1 p-4 ${sidebarOpen? 'mr-60': 'mr-16'}`}>
+          <div className={`flex-1 p-4 ${sidebarOpen? 'mr-60': 'mr-0'}`}>
             <div className='h-full'>
               <WaveformPlot 
                 data={data}

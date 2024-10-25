@@ -101,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div
       className={`transition-all duration-300 ${
-        isOpen ? 'w-64' : 'w-16'
+        isOpen ? 'w-64' : 'w-0'
       }  h-full dark:bg-gray-900 dark:text-white`}
     >
       {/* Sidebar Header */}
@@ -109,7 +109,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <h2 className={`${isOpen? 'block': 'hidden'} text-sm font-bold`}>
           Channel Controls
         </h2>
-        <div className='absolute top-4 right-4'>
+        <div className={`absolute top-4 right-4`}>
         <button onClick={() => setIsOpen(!isOpen)} className=' dark:bg-gray-300 focus:outline-none p-1'>
           {isOpen ? (
             <TbLayoutSidebarRightCollapse className=' text-white dark:text-gray-700 w-4 h-4'/>
@@ -204,80 +204,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
           ))
         }
-
-        {/* Channel 1 Controls */}
-        {/* {isOpen && (
-          <>
-          <div className="p-2 dark:bg-gray-800 border border-gray-600 shadow-sm rounded mb-1">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="text-xs font-semibold">Channel 1</h3>
-              <div className='flex items-center'>
-                <span
-                  className="block w-2 h-2 rounded-full mr-2"
-                  style={{ backgroundColor: channelColors[0] }}
-                ></span>
-                <FiSettings className="cursor-pointer dark:text-gray-400" onClick={() => openSettings('ch1')}/>
-              </div>
-             
-            </div>
-            <div className="mb-1">
-              <label className="text-xs">Offset (V):</label>
-              <input
-                type="number"
-                value={channelOffsets[0]}
-                onChange={(e) => handleChannelOffsetChange(0, e)}
-                className="bg-gray-700 text-white px-2 py-1 rounded w-full text-xs h-6"
-              />
-            </div>
-            <div>
-              <label className="text-xs">Range (V/Div):</label>
-              <input
-                type="number"
-                value={channelRanges[0]}
-                onChange={(e) => handleChannelRangeChange(0, e)}
-                className="bg-gray-700 text-white px-2 py-1 rounded w-full text-xs h-6"
-              />
-            </div>
-          </div>
-          </>
-        )} */}
-
-        {/* Channel 2 Controls */}
-        {/* {isOpen && (
-          <>
-            <div className="p-2 dark:bg-gray-800 border border-gray-600 rounded shadow-smmb-1">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="text-xs font-semibold">Channel 2</h3>
-                <div className='flex items-center'>
-                  <span
-                    className="block w-2 h-2 rounded-full mr-2"
-                    style={{ backgroundColor: channelColors[1] }}
-                  ></span>
-                  <FiSettings className="cursor-pointer dark:text-gray-400" onClick={() => openSettings('ch2')}/>
-                </div>
-                
-              </div>
-              <div className="mb-1">
-                <label className="text-xs">Offset (V):</label>
-                <input
-                  type="number"
-                  value={channelOffsets[1]}
-                  onChange={(e) => handleChannelOffsetChange(1, e)}
-                  className="bg-gray-700 text-white px-2 py-1 rounded w-full text-xs h-6"
-                />
-              </div>
-              <div>
-                <label className="text-xs">Range (V/Div):</label>
-                <input
-                  type="number"
-                  value={channelRanges[1]}
-                  onChange={(e) => handleChannelRangeChange(1, e)}
-                  className="bg-gray-700 text-white px-2 py-1 rounded w-full text-xs h-6"
-                />
-              </div>
-            </div>
-          </>
-        )} */}
 
       </div>
       {showSettings &&(

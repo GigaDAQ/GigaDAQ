@@ -12,5 +12,9 @@ export default defineConfig({
   },
   define: {
     'process.env': {},
-  }
+    // global: 'globalThis',
+  },
+  // optimizeDeps: {
+  //   exclude: ['plotly.js'],
+  // },
 })

@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Plot from 'react-plotly.js';
-import { Layout } from 'plotly.js';
+// import Plotly, { Layout } from 'plotly.js';
+import Plotly, { Layout } from 'plotly.js-basic-dist';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import VoltageOffsetIndicator from './waveform/components/VoltageOffsetIndicator';
 import YAxisControl from './waveform/components/YAxisControl';
+import PlotControlBar from './waveform/components/PlotControlBar';
+
+// const Plot = createPlotlyComponent(Plotly);
+
 
 interface DataPoint{
   time: number;
@@ -37,6 +42,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     setExpandYAxes,
   }
 ) => {
+  const [graphDiv, setGraphDiv] = useState<HTMLElement | null>(null);
 
   // Safegaurd to ensure data is not empty
   const sineWave: DataPoint[] = data[0]?.length ? data[0] : Array(1000).fill({time: 0, value: 0});
@@ -86,6 +92,52 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   // Change to make variable instead of hardcoded
   const channelColors = ['#00ff00', '#ff0000'];
 
+  const [isLegendVisible, setIsLegendVisible] = useState<boolean>(true);
+
+  const handleDownload = () => {
+    if (graphDiv) {
+      Plotly.downloadImage(graphDiv, {format: 'png', filename: 'plot', width: 800, height: 600});
+    }
+    else {
+      console.error('GraphDiv is not initialized yet');
+    }
+  }
+
+  const handleZoomIn = () => {
+    if (graphDiv) {
+      Plotly.relayout(graphDiv, {
+        'xaxis.range': [timePosition - 2 * timeBase, timePosition + 2 * timeBase],
+      });
+    }
+    else {
+      console.error('GraphDIv is not initialized yet');
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (graphDiv) {
+      Plotly.relayout(graphDiv, {
+        'xaxis.range': [timePosition - 10 * timeBase, timePosition + 10 * timeBase],
+      });
+    }
+    else {
+      console.error('GraphDiv is not initialized yet.');
+    }
+  };
+
+  const handleToggleLegend = () => {
+    setIsLegendVisible((prev) => !prev);
+    if (graphDiv) {
+      Plotly.relayout(graphDiv, {
+        showlegend: !isLegendVisible,
+      });
+    }
+    else {
+      console.error('GraphDiv is not initialized yet.');
+    }
+    
+  };
+
 
   useEffect(() => {
     setXRange([
@@ -100,6 +152,13 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
 
   return (
     <div className='plot-container relative bg-gray-100 dark:bg-gray-700 w-full h-full'>
+      <PlotControlBar
+        isLegendVisible= {isLegendVisible}
+        onDownload={handleDownload}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onToogleLegend={handleToggleLegend}
+      />
       <YAxisControl
         activeChannel={activeChannel}
         setActiveChannel={setActiveChannel}
@@ -124,6 +183,8 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     <AutoSizer>
       {({height, width}) =>(
        <Plot
+      //  divId='waveform-plot'
+      //  ref={plotRef}
        data={[
          {
            x: sineWave.map(point => point.time),
@@ -144,6 +205,15 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
        ]}
        layout={{
          autosize: true,
+         showlegend: isLegendVisible,
+         legend: {
+          x: 1,
+          y: 1,
+          xanchor: 'right',
+          yanchor: 'top',
+          bgcolor: 'rgba(255,255,255,0.5)',
+          orientation: 'v',
+         },
          xaxis: { 
           title: 'Time',
           range: xRange,
@@ -189,8 +259,12 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
         font: { color: '#fff' },  // White text color
         margin: { t: 40, r: 20, l: 50, b: 40 },
        } as Partial<Layout>}
+       config={{
+        displayModeBar: false,
+       }}
        useResizeHandler
        style={{ width, height }}
+       onInitialized={(figure, graphDiv) => setGraphDiv(graphDiv)}
       
      /> 
       )}
