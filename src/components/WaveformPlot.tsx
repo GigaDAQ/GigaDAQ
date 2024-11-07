@@ -27,6 +27,8 @@ interface WaveformPlotProps {
   setActiveChannel: (channel: number) => void;
   expandYAxes: boolean;
   setExpandYAxes: (expand: boolean) => void;
+  currentTheme: 'light' | 'dark';
+  onOffsetChange: (channelIndex: number, newOffset: number) => void; 
 }
 
 const WaveformPlot: React.FC<WaveformPlotProps> = (
@@ -40,10 +42,11 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     setActiveChannel,
     expandYAxes,
     setExpandYAxes,
+    currentTheme,
+    onOffsetChange,
   }
 ) => {
   const [graphDiv, setGraphDiv] = useState<HTMLElement | null>(null);
-
   // Safegaurd to ensure data is not empty
   const sineWave: DataPoint[] = data[0]?.length ? data[0] : Array(1000).fill({time: 0, value: 0});
   const squareWave: DataPoint[] = data[1]?.length ? data[1] : Array(1000).fill({time: 0, value: 0});
@@ -53,34 +56,18 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     timePosition + (5 * timeBase),
   ]);
 
-  const totalLength = sineWave.length;
-  // const time = Array.from({length: totalLength}, (_, i) => (i/samplingRate) * timeBase + timePosition);
-  const time = Array.from({ length: totalLength }, (_, i) => (i / samplingRate) * timeBase);
-
-  const totalDivisions = 10; 
-  
-  // Y-axis: Determine y-axis range based on channel 1's range and offset
-  const yDivisions = 10; // 10 divisions for the y-axis, similar to x-axis
-  const channel1Offset = channelOffsets[0];
-  const channel1Range = channelRanges[0];
-  const channel2Range = channelRanges[1];
-  const channel2Offset = channelOffsets[1];
 
   // const yRange = [
-  //   Math.min(...channelOffsets.map((offset, index) => offset - 5 * channelRanges[index])),
-  //   Math.max(...channelOffsets.map((offset, index) => offset + 5 * channelRanges[index])),
-  // ];
+  //   channelOffsets[activeChannel] - 5,
+  //   channelOffsets[activeChannel] + 5
+  // ]
 
-  // To do : make the plot not shift rather just the signal and signal values
+  const getYAxisRange = (channelIndex: number) => {
+    const range = 5 * channelRanges[channelIndex]; // 5 divisions up and down
+    const offset = channelOffsets[channelIndex];
+    return [offset - range, offset + range];
+  };
 
-  const yRange = [
-    channelOffsets[activeChannel] - 5,
-    channelOffsets[activeChannel] + 5
-  ]
-
-  // Adjust the signal by applying the range (scaling) and offset (shifting)
-  const adjustedSineWave = sineWave.map(({value}) => (value / channel1Range) + channel1Offset);
-  const adjustedSquareWave = squareWave.map(({value}) => (value / channel2Range) + channel2Offset);
 
     // Function to update range dynamically based on timePosition and timeBase
   const updateXRange = () => {
@@ -150,6 +137,107 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     updateXRange();
   }, [timePosition, timeBase]);
 
+  // // index of the other channel based on active channel, must be compatible with 4 channel
+  // const otherChannel = activeChannel === 0 ? 1 : 0;
+
+
+
+  //  Prepare plot data and layout
+   const plotData = [
+    {
+      x: sineWave.map(point => point.time),
+      y: sineWave.map(point => point.value), // Use raw values
+      type: 'scatter',
+      mode: 'lines',
+      line: { color: channelColors[0], width: activeChannel === 0 ? 3 : 1.5 },
+      name: 'CH 1',
+      // yaxis: expandYAxes || activeChannel === 0 ? 'y' : 'y2',
+    },
+    {
+      x: squareWave.map(point => point.time),
+      y: squareWave.map(point => point.value), // Use raw values
+      type: 'scatter',
+      mode: 'lines',
+      line: { color: channelColors[1], width: activeChannel === 1 ? 3 : 1.5 },
+      name: 'CH 2',
+      // yaxis: expandYAxes || activeChannel === 1 ? 'y' : 'y2',
+      yaxis: 'y2',
+    }
+  ];
+
+  const plotLayout = {
+    autosize: true,
+    showlegend: isLegendVisible,
+    legend: {
+      x: 1,
+      y: 1,
+      xanchor: 'right',
+      yanchor: 'top',
+      bgcolor: 'rgba(255,255,255,0.5)',
+    },
+    xaxis: {
+      title: 'Time',
+      range: xRange,
+      showgrid: true,
+      gridcolor: '#444',
+      dtick: timeBase,
+      ticklen: 10,
+      tickwidth: 2,
+      gridwidth: 0.5,
+      zeroline: false,
+      tick0: 0,
+      minor: {
+        dtick: 0.1 * timeBase,
+        ticklen: 5,
+        ticks: 'inside',
+        gridwidth: 0.25,
+        gridcolor: '#111',
+      },
+    },
+    yaxis: {
+      title:  `V (CH 1)`,
+      range: getYAxisRange(0),
+      showgrid: true,
+      gridcolor: '#444',
+      dtick: channelRanges[0],
+      ticklen: 10,
+      tickwidth: 2,
+      // zeroline: true,
+      // zerolinecolor: channelColors[0],
+      // tickfont: { color: activeChannel === 1 ? channelColors[1] : channelColors[0]},
+      // titlefont: { color: activeChannel === 1 ? channelColors[1] : channelColors[0] },
+      tickfont: { color: channelColors[0]},
+      titlefont: { color: channelColors[0] },
+      side: activeChannel == 0? 'left' : 'right',
+    },
+    yaxis2:  {
+      title: 'V (CH 2)',
+      range: getYAxisRange(1) ,
+      showgrid: true,
+      gridcolor: '#444',
+      dtick: channelRanges[activeChannel?1:0],
+      ticklen: 10,
+      tickwidth: 2,
+      zeroline: true,
+      // automargin: true,
+      // zerolinecolor: channelColors[1],
+      tickfont: { color: activeChannel === 1 ? channelColors[0] : channelColors[1]},
+      titlefont: { color: activeChannel === 1 ? channelColors[0] : channelColors[1] },
+      overlaying: 'y',
+      side: 'right',
+      showticklabels: expandYAxes,
+      // ticks: expandYAxes ? 'outside' : '', 
+      // showline: expandYAxes,
+      // anchor: 'x',
+      // visible: expandYAxes
+    },
+    paper_bgcolor: currentTheme === 'dark' ? '#111' : '#fff',
+    plot_bgcolor: currentTheme === 'dark' ? '#222' : '#fff',
+    font: { color: currentTheme === 'dark' ? '#fff': '#000' },
+    margin: { t: 40, r: expandYAxes ? 50 : 20, l: 50, b: 40 },
+  };
+  console.log("the 2nd axis is shown: ", expandYAxes );
+
   return (
     <div className='plot-container relative bg-gray-100 dark:bg-gray-700 w-full h-full'>
       <PlotControlBar
@@ -173,10 +261,12 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
             key={index}
             offset={offset}
             color={index === 0 ? '#00ff00' : '#ff0000'}
-            yRange={yRange}
+            yRange={getYAxisRange(index)}
             height={100} // Assuming the height is 100% of plot aread,
             onClick={() => setActiveChannel(index)}
             isActive={index === activeChannel}
+            left={expandYAxes ? (index === activeChannel ? '35px' : 'calc(100% - 30px)') : '35px'}
+            onOffsetChange={(newOffset) => onOffsetChange(index, newOffset)}
           ></VoltageOffsetIndicator>
         ))
       }
@@ -185,80 +275,10 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
        <Plot
       //  divId='waveform-plot'
       //  ref={plotRef}
-       data={[
-         {
-           x: sineWave.map(point => point.time),
-           y: adjustedSineWave,
-           type: 'scatter',
-           mode: 'lines',
-           line: { color: '#00ff00', width: activeChannel === 0 ? 3 : 1.5 }, // Highlight active channel
-           name: 'Channel 1',
-         },
-         {
-           x: squareWave.map(point => point.time),
-           y: adjustedSquareWave,
-           type: 'scatter',
-           mode: 'lines',
-           line: { color: '#ff0000', width: activeChannel === 1 ? 3 : 1.5 }, // Highlight active channel
-           name: 'Channel 2',
-         }
-       ]}
-       layout={{
-         autosize: true,
-         showlegend: isLegendVisible,
-         legend: {
-          x: 1,
-          y: 1,
-          xanchor: 'right',
-          yanchor: 'top',
-          bgcolor: 'rgba(255,255,255,0.5)',
-          orientation: 'v',
-         },
-         xaxis: { 
-          title: 'Time',
-          range: xRange,
-          showgrid: true, 
-          gridcolor: '#444', 
-          dtick: timeBase,
-          ticklen: totalDivisions,
-          tickwidth: 2,
-          gridwidth: 0.5, // Minor grid line width
-          zeroline: false,
-          tick0: 0,
-          minor: {
-            dtick: 0.1 * timeBase, // Subdivision tick
-            ticklen: 5, // Length of minor ticks
-            ticks: 'inside',
-            gridwidth: 0.25,
-            gridcolor: '#111',
-          },
-         }, 
-         yaxis: {
-
-          title: expandYAxes ? `Voltage (Channels 1 & 2)` : `Voltage (Channel ${activeChannel + 1})`,
-          range: yRange,
-          showgrid: true, 
-          gridcolor: channelOffsets.length > 1 ? '#888' : channelColors[activeChannel],
-          dtick: channelRanges[activeChannel],
-          ticklen: yDivisions,
-          tickwidth: 2,
-          zeroline: false,
-          tickfont: {
-            color: channelColors[activeChannel], // Set y-axis label color to match the active channel
-          },
-          minor: {
-            dtick: 0.1 * channel1Range, // modify to math
-            ticklen: 5,
-            gridwidth: 0.25,
-            gridcolor: '#111',
-          }
-
-        },
-        paper_bgcolor: '#111',  // Dark background
-        plot_bgcolor: '#222',  // Dark plot area
-        font: { color: '#fff' },  // White text color
-        margin: { t: 40, r: 20, l: 50, b: 40 },
-       } as Partial<Layout>}
+       data= 
+       {plotData}
+       layout= 
+       {plotLayout}
        config={{
         displayModeBar: false,
        }}

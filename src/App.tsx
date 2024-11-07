@@ -4,11 +4,20 @@ import { useSelector } from 'react-redux';
 import { RootState } from './store';
 import Sidebar from './components/sidebar/Sidebar';
 import Toolbar from './components/toolbar/toolbar';
+// import handleExport from './helpers/FileExport.ts';
+import { saveAs } from 'file-saver';
+
+
+interface DataPoint{
+  time: number;
+  value: number;
+}
+
 
 const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() =>{
     // Get theme from localStorage or default to light
-    const storedTheme = localStorage.getItem('item') as 'light' | 'dark';
+    const storedTheme = localStorage.getItem('theme') as 'light' | 'dark';
     return storedTheme || 'light';
   });
 
@@ -35,6 +44,32 @@ const App: React.FC = () => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme); // Persist theme change in localStorage
   };
+
+  // Export function
+  const handleExport = () => {
+    const signalData = data[0]; // Default to Signal 1
+
+    if (!signalData || signalData.length === 0) {
+      console.error('No data available to export.');
+      return;
+    }
+
+    const formatDataToCSV = (signalData: DataPoint[]): string => {
+      let csvContent = 'Index,Voltage,Time\n';
+      
+      signalData.forEach((point, index) => {
+        csvContent += `${index},${point.value},${point.time}\n`;
+      });
+
+      return csvContent;
+    };
+
+    const csvContent = formatDataToCSV(signalData);
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `signal_data.csv`);
+  };
+
   
 
   return (
@@ -45,13 +80,14 @@ const App: React.FC = () => {
       <div className="flex-1 flex flex-col"> 
         <div className=" bg-gray-300  dark:bg-gray-800 text-black dark:text-white p-2">
           <h1 className="text-xl font-bold">Scope Waveform</h1>
-          <Toolbar onThemeChange={handleThemeChange} currentTheme={theme}/>
+          <Toolbar onThemeChange={handleThemeChange} currentTheme={theme} onExport={handleExport}/>
         </div>
         {/* Waveform plot container */}
         <div className="flex-1 flex relative">
           <div className={`flex-1 p-4 ${sidebarOpen? 'mr-60': 'mr-0'}`}>
             <div className='h-full'>
               <WaveformPlot 
+                currentTheme={theme}
                 data={data}
                 samplingRate={samplingRate}
                 timePosition={timePosition}
@@ -63,6 +99,11 @@ const App: React.FC = () => {
                 setActiveChannel={setActiveChannel}
                 expandYAxes= {expandYAxes}
                 setExpandYAxes={setExpandYAxes}
+                onOffsetChange={(channelIndex, newOffset) => {
+                  const updatedOffsets = [...channelOffsets];
+                  updatedOffsets[channelIndex] = newOffset;
+                  setChannelOffsets(updatedOffsets);
+                }}
               />
             </div>  
           </div>
@@ -71,6 +112,7 @@ const App: React.FC = () => {
             <Sidebar 
               onTimePositionChange={(center) => setTimePosition(center)}
               onTimeBaseChange={(timeBase) => setTimeBase(timeBase)}
+              channelOffsets= {channelOffsets}
               onOffsetChange={(channel, offset) => {
                 const updatedOffsets = [...channelOffsets];
                 updatedOffsets[channel] = offset;

@@ -17,7 +17,7 @@ const YAxisControl: React.FC<YAxisControlProps> =({
 }) => {
     return (
         <>
-            <div className='absolute z-50  top-2 left-2 flex items-center space-x-2 text-xs'>
+            <div className='absolute z-20  top-2 left-2 flex items-center space-x-2 text-xs'>
                 <div
                     className={`px-1 py-0.5 bg-gray-800 text-white rounded ${
                         expandYAxes ? '' : 'cursor-pointer'
@@ -53,15 +53,7 @@ const YAxisControl: React.FC<YAxisControlProps> =({
                 )
 
                 }
-                {/* <button
-                    className='expand-button'
-                    onClick={() => {
-                        // Logic to expand and show multiple y-axes
-                    }}
-                >
-                    '↔'
-
-                </button> */}
+            
                 
             </div>
         </>

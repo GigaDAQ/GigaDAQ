@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FiSettings } from 'react-icons/fi'; // Icon for settings
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarRightCollapse } from 'react-icons/tb';
 import CardSettingsMenu from './components/settings/CardSettingsMenu';
@@ -7,6 +7,7 @@ import DropdownInput from './components/DropdownInput';
 interface SidebarProps{
   onTimePositionChange: (position: number) => void;
   onTimeBaseChange: (base: number) => void;
+  channelOffsets: number[];
   onOffsetChange: (channel: number, offset: number) => void;
   onRangeChange: (channel: number, range: number) => void;
   isOpen: boolean;
@@ -41,22 +42,42 @@ const Sidebar: React.FC<SidebarProps> = ({
   setIsOpen,
   activeChannel,
   setActiveChannel,
+  channelOffsets,
 }) => {
   // const [isOpen, setIsOpen] = useState<boolean>(true);
   // const [view, setView] = useState<string>('menu'); // Manage the current sidebar view
   const [timePosition, setTimePosition] = useState<number>(0);
   const [timeBase, setTimeBase] = useState<number>(1);
-  const [channelOffsets, setChannelOffsets] = useState<number[]>([0,0]);
+  // const [channelOffsets, setChannelOffsets] = useState<number[]>([0,0]);
   const [channelRanges, setChannelRanges] = useState<number[]>([1,1]);
   const [showSettings, setShowSettings] = useState(false); // To show/hide the settings modal
-  const [activeCard, setActiveCard] = useState(''); // Track which card's settings are open
+  const [activeCard, setActiveCard] = useState<string | null>(null); // Track which card's settings are open
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number; } | null>(null);
 
-  const openSettings = (cardName: string) => {
+  const cogIconRef = useRef<HTMLDivElement | null>(null);
+
+  
+
+  const openSettings = (cardName: string, e: React.MouseEvent) => {
+    const cogIcon = (e.target as HTMLElement).getBoundingClientRect();
+    setMenuPosition({ top: cogIcon.bottom, right: window.innerWidth - cogIcon.right });
     setActiveCard(cardName);
-    setShowSettings(true);
-  };
+    setShowSettings((prev) => !prev);
+  }
 
   const closeSettings = () => setShowSettings(false);
+
+  // Close the settings menu if clicking outside of it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showSettings && !cogIconRef.current?.contains(event.target as Node)) {
+        closeSettings();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSettings]);
 
 
   const handleTimePositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const offset = parseFloat(e.target.value);
     const updatedOffsets = [...channelOffsets];
     updatedOffsets[channel] = offset;
-    setChannelOffsets(updatedOffsets);
+    // setChannelOffsets(updatedOffsets);
     onOffsetChange(channel, offset);
   }
   const handleChannelRangeChange = (channel: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,6 +117,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     setChannelRanges(updatedRanges);
     onRangeChange(channel, range); // Pass this to control range
   };
+
+  const [contextMenu, setContextMenu] = useState({
+    position:{
+      x: 0,
+      y: 0,
+    },
+    toggled: false,
+  })
 
 
   return (
@@ -127,7 +156,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="p-2 dark:bg-gray-800 border border-gray-600 showdow-sm rounded mb-1">
             <div className='flex justify-between items-center'>
               <h3 className="p-1 text-xs font-semibold mb-1">Time Position</h3>
-              <FiSettings className="cursor-pointer dark:text-gray-400" onClick={() => openSettings('time')}/>
+              <FiSettings 
+                className="cursor-pointer dark:text-gray-400" 
+                onClick={(e) => openSettings('time', e)}
+              />
             </div>
             <DropdownInput
                 value={timePosition}
@@ -179,7 +211,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     ></span>
                     <FiSettings
                       className="cursor-pointer dark:text-gray-400"
-                      onClick={() => openSettings(`ch${channelIndex + 1}`)}
+                      onClick={(e) => openSettings(`ch${channelIndex + 1}`, e)}
                     />
                   </div>
                 </div>
@@ -206,10 +238,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         }
 
       </div>
-      {showSettings &&(
-        <CardSettingsMenu onClose={closeSettings} settingsContent= {
-          <div>Settings for {activeCard}</div>
-        }></CardSettingsMenu>
+      {/* replace with COntext Menu instead of this solution */}
+      {showSettings && menuPosition && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-0 z-10" onClick={closeSettings}>
+          <CardSettingsMenu 
+            onClose={closeSettings} 
+            settingsContent= {
+              <div>Settings for {activeCard}</div>
+            }
+            position={menuPosition}
+          />
+        </div>
       )}
     </div>
   );

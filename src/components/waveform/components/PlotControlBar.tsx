@@ -53,7 +53,7 @@ const PlotControlBar: React.FC<PlotControlBarProps> = ({
                     </button>
                 </div>
             ):(
-                <div className="absolute top-0 left-0 right-0 flex justify-center p-1 z-10">
+                <div className="absolute top-0 left-16 right-8 flex justify-center p-1 z-10">
                     {/* Expand TopBar Button */}
                     <button onClick={() => setIsExpanded(true)} className="text-white p-1 rounded hover:bg-gray-700">
                         <FaChevronDown size={16}/>
