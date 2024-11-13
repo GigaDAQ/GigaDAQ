@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import VoltageOffsetIndicator from './waveform/components/VoltageOffsetIndicator';
 import YAxisControl from './waveform/components/YAxisControl';
 import PlotControlBar from './waveform/components/PlotControlBar';
+import { LineProperty } from './sidebar/components/settings/LineProperties';
 
 // const Plot = createPlotlyComponent(Plotly);
 
@@ -29,6 +30,8 @@ interface WaveformPlotProps {
   setExpandYAxes: (expand: boolean) => void;
   currentTheme: 'light' | 'dark';
   onOffsetChange: (channelIndex: number, newOffset: number) => void; 
+  channelLineProperties: LineProperty[];
+  visibleSignals: boolean[];
 }
 
 const WaveformPlot: React.FC<WaveformPlotProps> = (
@@ -44,6 +47,8 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     setExpandYAxes,
     currentTheme,
     onOffsetChange,
+    channelLineProperties,
+    visibleSignals,
   }
 ) => {
   const [graphDiv, setGraphDiv] = useState<HTMLElement | null>(null);
@@ -56,11 +61,6 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     timePosition + (5 * timeBase),
   ]);
 
-
-  // const yRange = [
-  //   channelOffsets[activeChannel] - 5,
-  //   channelOffsets[activeChannel] + 5
-  // ]
 
   const getYAxisRange = (channelIndex: number) => {
     const range = 5 * channelRanges[channelIndex]; // 5 divisions up and down
@@ -137,9 +137,9 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     updateXRange();
   }, [timePosition, timeBase]);
 
-  // // index of the other channel based on active channel, must be compatible with 4 channel
-  // const otherChannel = activeChannel === 0 ? 1 : 0;
 
+    const showCH1 = activeChannel === 0 || expandYAxes;
+    const showCH2 = activeChannel === 1 || expandYAxes;
 
 
   //  Prepare plot data and layout
@@ -149,21 +149,37 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
       y: sineWave.map(point => point.value), // Use raw values
       type: 'scatter',
       mode: 'lines',
-      line: { color: channelColors[0], width: activeChannel === 0 ? 3 : 1.5 },
+      line: { 
+        // color: channelColors[0],
+        // width: activeChannel === 0 ? 3 : 1.5 
+        color: channelLineProperties[0].color,
+        width: channelLineProperties[0].width,
+        dash: channelLineProperties[0].style
+      },
       name: 'CH 1',
-      // yaxis: expandYAxes || activeChannel === 0 ? 'y' : 'y2',
+      yaxis: 'y',
+      visible: visibleSignals[0] ? true : 'legendonly',
     },
     {
       x: squareWave.map(point => point.time),
       y: squareWave.map(point => point.value), // Use raw values
       type: 'scatter',
       mode: 'lines',
-      line: { color: channelColors[1], width: activeChannel === 1 ? 3 : 1.5 },
+      line: { 
+        // color: channelColors[1],
+        // width: activeChannel === 1 ? 3 : 1.5 
+        color: channelLineProperties[1].color,
+        width: channelLineProperties[1].width,
+        dash: channelLineProperties[1].style
+      },
       name: 'CH 2',
-      // yaxis: expandYAxes || activeChannel === 1 ? 'y' : 'y2',
       yaxis: 'y2',
+      visible: visibleSignals[1] ? true : 'legendonly',
     }
   ];
+  useEffect(() => {
+    console.log('Updated line properties:', channelLineProperties);
+  }, [channelLineProperties]);
 
   const plotLayout = {
     autosize: true,
@@ -195,48 +211,38 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
       },
     },
     yaxis: {
-      title:  `V (CH 1)`,
+      title:  showCH1 ? `V (CH 1)` : '',
       range: getYAxisRange(0),
       showgrid: true,
       gridcolor: '#444',
       dtick: channelRanges[0],
-      ticklen: 10,
+      ticklen: 4,
       tickwidth: 2,
-      // zeroline: true,
-      // zerolinecolor: channelColors[0],
-      // tickfont: { color: activeChannel === 1 ? channelColors[1] : channelColors[0]},
-      // titlefont: { color: activeChannel === 1 ? channelColors[1] : channelColors[0] },
-      tickfont: { color: channelColors[0]},
-      titlefont: { color: channelColors[0] },
+      showticklabels: showCH1,
+      tickfont: { color: channelLineProperties[0].color},
+      titlefont: { color: channelLineProperties[0].color },
       side: activeChannel == 0? 'left' : 'right',
     },
     yaxis2:  {
-      title: 'V (CH 2)',
+      title: showCH2 ? 'V (CH 2)' : '',
       range: getYAxisRange(1) ,
       showgrid: true,
       gridcolor: '#444',
       dtick: channelRanges[activeChannel?1:0],
-      ticklen: 10,
+      ticklen: 4,
       tickwidth: 2,
       zeroline: true,
-      // automargin: true,
-      // zerolinecolor: channelColors[1],
-      tickfont: { color: activeChannel === 1 ? channelColors[0] : channelColors[1]},
-      titlefont: { color: activeChannel === 1 ? channelColors[0] : channelColors[1] },
+      tickfont: { color: channelLineProperties[1].color},
+      titlefont: { color: channelLineProperties[1].color },
       overlaying: 'y',
-      side: 'right',
-      showticklabels: expandYAxes,
-      // ticks: expandYAxes ? 'outside' : '', 
-      // showline: expandYAxes,
-      // anchor: 'x',
-      // visible: expandYAxes
+      side: activeChannel == 1 ? 'left' : 'right',
+      showticklabels: showCH2,
     },
     paper_bgcolor: currentTheme === 'dark' ? '#111' : '#fff',
     plot_bgcolor: currentTheme === 'dark' ? '#222' : '#fff',
     font: { color: currentTheme === 'dark' ? '#fff': '#000' },
     margin: { t: 40, r: expandYAxes ? 50 : 20, l: 50, b: 40 },
   };
-  console.log("the 2nd axis is shown: ", expandYAxes );
 
   return (
     <div className='plot-container relative bg-gray-100 dark:bg-gray-700 w-full h-full'>
@@ -252,7 +258,8 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
         setActiveChannel={setActiveChannel}
         expandYAxes={expandYAxes}
         setExpandYAxes={setExpandYAxes}
-        channelColors={['#00ff00', '#ff0000']}
+        // channelColors={['#00ff00', '#ff0000']}
+        channelColors={channelLineProperties.map((val) => val.color)}
       />
       {/*Voltage Offset Indicators*/}
       {
@@ -260,12 +267,13 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
           <VoltageOffsetIndicator
             key={index}
             offset={offset}
-            color={index === 0 ? '#00ff00' : '#ff0000'}
+            expandYAxes={expandYAxes}
+            color={channelLineProperties[index].color}
             yRange={getYAxisRange(index)}
             height={100} // Assuming the height is 100% of plot aread,
             onClick={() => setActiveChannel(index)}
             isActive={index === activeChannel}
-            left={expandYAxes ? (index === activeChannel ? '35px' : 'calc(100% - 30px)') : '35px'}
+            left={expandYAxes ? (index === activeChannel ? '35px' : 'calc(100% - 45px)') : '35px'}
             onOffsetChange={(newOffset) => onOffsetChange(index, newOffset)}
           ></VoltageOffsetIndicator>
         ))

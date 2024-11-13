@@ -3,6 +3,7 @@ import { FiSettings } from 'react-icons/fi'; // Icon for settings
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarRightCollapse } from 'react-icons/tb';
 import CardSettingsMenu from './components/settings/CardSettingsMenu';
 import DropdownInput from './components/DropdownInput';
+import LineProperties, { LineProperty } from './components/settings/LineProperties';
 
 interface SidebarProps{
   onTimePositionChange: (position: number) => void;
@@ -14,7 +15,13 @@ interface SidebarProps{
   setIsOpen: (isOpen: boolean) => void;
   activeChannel: number;
   setActiveChannel: (channel: number) => void;
+  channelLineProperties: LineProperty[];
+  setChannelLineProperties: (properties: LineProperty[]) => void;
+  visibleSignals: boolean[];
+  handleCheckSignal: (channelIdx: number) => void;
 }
+
+export type SettingsCardIndex = number | 'time' | null;
 
 // Available time position and time bases
 const timePositions = [0, 50, 20, 10, 5, 2, -2, -5, -10, -20, -50];
@@ -43,6 +50,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeChannel,
   setActiveChannel,
   channelOffsets,
+  channelLineProperties,
+  setChannelLineProperties,
+  visibleSignals,
+  handleCheckSignal,
 }) => {
   // const [isOpen, setIsOpen] = useState<boolean>(true);
   // const [view, setView] = useState<string>('menu'); // Manage the current sidebar view
@@ -52,33 +63,41 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [channelRanges, setChannelRanges] = useState<number[]>([1,1]);
   const [showSettings, setShowSettings] = useState(false); // To show/hide the settings modal
   const [activeCard, setActiveCard] = useState<string | null>(null); // Track which card's settings are open
+  const [settingsChannelIndex, setSettingsChannelIndex] = useState<SettingsCardIndex>(null);
   const [menuPosition, setMenuPosition] = useState<{ top: number; right: number; } | null>(null);
+  // const [visibleSignals, setVisibleSignals] = useState<boolean[]>([true, true]);
 
   const cogIconRef = useRef<HTMLDivElement | null>(null);
 
+  const handleLinePropertiesChange = (channelIndex: number, newProperties: LineProperty) => {
+    const updatedProperties = [...channelLineProperties];
+    updatedProperties[channelIndex] = newProperties;
+    setChannelLineProperties(updatedProperties);
+  };
+
   
 
-  const openSettings = (cardName: string, e: React.MouseEvent) => {
+  const openSettings = (channelIndex: 'time' | number, e: React.MouseEvent) => {
+    e.stopPropagation();
     const cogIcon = (e.target as HTMLElement).getBoundingClientRect();
     setMenuPosition({ top: cogIcon.bottom, right: window.innerWidth - cogIcon.right });
-    setActiveCard(cardName);
+    // setActiveCard(cardName);
+    setSettingsChannelIndex(channelIndex);
     setShowSettings((prev) => !prev);
   }
 
-  const closeSettings = () => setShowSettings(false);
+  const closeSettings = () => {
+    setSettingsChannelIndex(null);
+    setShowSettings(false);
+  }
 
-  // Close the settings menu if clicking outside of it
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showSettings && !cogIconRef.current?.contains(event.target as Node)) {
-        closeSettings();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showSettings]);
-
+  // const handleCheckSignal = (channelIdx: number, e: React.ChangeEvent<HTMLInputElement> ) => {
+  //   setVisibleSignals( prev => prev.map((val, idx) => idx === channelIdx ? !val : val));
+  // };
+  // // Log the latest state after it updates
+  // useEffect(() => {
+  //   console.log("Updated visibleSignals:", visibleSignals);
+  // }, [visibleSignals]);
 
   const handleTimePositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const position = parseFloat(e.target.value) || 0;
@@ -126,6 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     toggled: false,
   })
 
+  console.log('active card is:', activeCard);
 
   return (
     <div
@@ -197,9 +217,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => setActiveChannel(channelIndex)}
               >
                 <div className="flex justify-between items-center mb-1">
-                  <h3 className="text-xs font-semibold">{`Channel ${
-                    channelIndex + 1
-                  }`}</h3>
+                  <div className="flex space-x-2">
+                    <input
+                      type='checkbox'
+                      checked={visibleSignals[channelIndex]}
+                      onChange={(e) => {handleCheckSignal(channelIndex)}}
+                    />
+                    <h3 className="text-xs font-semibold">{`Channel ${
+                      channelIndex + 1
+                    }`}</h3>
+                  </div>
                   <div className="flex items-center">
                     <span
                       className={`block w-2 h-2 rounded-full mr-2 ${
@@ -211,7 +238,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     ></span>
                     <FiSettings
                       className="cursor-pointer dark:text-gray-400"
-                      onClick={(e) => openSettings(`ch${channelIndex + 1}`, e)}
+                      onClick={(e) => openSettings(channelIndex, e)}
                     />
                   </div>
                 </div>
@@ -242,10 +269,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       {showSettings && menuPosition && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-0 z-10" onClick={closeSettings}>
           <CardSettingsMenu 
-            onClose={closeSettings} 
-            settingsContent= {
-              <div>Settings for {activeCard}</div>
-            }
+            onClose={closeSettings}
+            channelIndex= {settingsChannelIndex as Exclude<SettingsCardIndex,null>}
+            channelLineProperties={channelLineProperties}
+            setChannelLineProperties={setChannelLineProperties}
             position={menuPosition}
           />
         </div>

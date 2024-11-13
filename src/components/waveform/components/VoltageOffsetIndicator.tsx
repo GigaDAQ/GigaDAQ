@@ -10,6 +10,7 @@ interface VoltageOffsetIndicatorProps{
     isActive: boolean;
     onOffsetChange: (newOffset: number) => void;
     left: string;
+    expandYAxes: boolean
 }
 const VoltageOffsetIndicator: React.FC<VoltageOffsetIndicatorProps> = ({ 
     offset,
@@ -20,6 +21,7 @@ const VoltageOffsetIndicator: React.FC<VoltageOffsetIndicatorProps> = ({
     isActive,
     onOffsetChange,
     left,
+    expandYAxes
 }) => {
 
     const [isDragging, setIsDragging] = useState(false);
@@ -27,6 +29,9 @@ const VoltageOffsetIndicator: React.FC<VoltageOffsetIndicatorProps> = ({
     const [yMin, yMax] = yRange;
     const [positionPercentage, setPositionPercentage] = useState(50); 
 
+
+    // Recalculate positionPercentage when offset or yRange changes
+  
     // Recalculate positionPercentage when offset or yRange changes
     useEffect(() => {
       const newPositionPercentage = ((5 + offset) / (10)) * 100;
@@ -34,9 +39,12 @@ const VoltageOffsetIndicator: React.FC<VoltageOffsetIndicatorProps> = ({
     }, [offset, yRange]);
     
   
-
+    const initialMouseYRef = useRef<number>(0);
+    const initialOffsetRef = useRef<number>(0);
     const handleMouseDown = (e: React.MouseEvent) => {
         e.preventDefault();
+        initialMouseYRef.current = e.clientY;
+        initialOffsetRef.current = offset;
         setIsDragging(true);
     };
 
@@ -44,21 +52,32 @@ const VoltageOffsetIndicator: React.FC<VoltageOffsetIndicatorProps> = ({
         setIsDragging(false);
     };
 
+    
+
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-          if (isDragging && indicatorRef.current) {
-            const plotRect = indicatorRef.current.parentElement?.getBoundingClientRect();
-            if (plotRect) {
-              const mouseY = e.clientY;
-              const plotTop = plotRect.top;
-              const plotHeight = plotRect.height;
-              let position = ((mouseY - plotTop) / plotHeight);
-              position = Math.max(0, Math.min(1, position)); // Clamp between 0 and 1
-              const newOffset = yMax - position * (yMax - yMin);
-              onOffsetChange(newOffset);
-            }
+      const handleMouseMove = (e: MouseEvent) => {
+        if (isDragging && indicatorRef.current) {
+          const plotRect = indicatorRef.current.parentElement?.getBoundingClientRect();
+          if (plotRect) {
+            const deltaY = e.clientY - initialMouseYRef.current;
+            const voltsPerPixel = (yMax - yMin) / plotRect.height;
+            let deltaOffset = deltaY * voltsPerPixel;
+            let newOffset = initialOffsetRef.current + deltaOffset;
+    
+            // Limit the change to ±10 units from initialOffset
+            const maxShift = 10;
+            const minOffset = initialOffsetRef.current - maxShift;
+            const maxOffset = initialOffsetRef.current + maxShift;
+            newOffset = Math.max(minOffset, Math.min(maxOffset, newOffset));
+    
+            // Clamp newOffset within yMin and yMax
+            newOffset = Math.max(yMin, Math.min(yMax, newOffset));
+    
+            onOffsetChange(newOffset);
           }
-        };
+        }
+      };
+        
         if (isDragging) {
           document.addEventListener('mousemove', handleMouseMove);
           document.addEventListener('mouseup', handleMouseUp);

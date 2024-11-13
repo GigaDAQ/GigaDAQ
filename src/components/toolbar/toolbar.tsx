@@ -5,11 +5,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { FiSettings } from 'react-icons/fi';
 import SettingsMenu from './settings/settingsMenu';
+import ExportModal from './export/ExportModal';
 
 interface ToolbarProps {
     onThemeChange: (theme: 'light' | 'dark') => void;
     currentTheme: 'light' | 'dark'; 
-    onExport: () => void;
+    onExport: (selectedChannels: number[]) => void;
 }
 const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}) => {
 
@@ -19,6 +20,7 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
   const { data, samplingRate, isAcquiring } = useSelector((state: RootState) => state.acquisition);
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [controlMenuOpen, setControlMenuOpen] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const fileMenuRef = useRef<HTMLDivElement>(null);
   const controlMenuRef = useRef<HTMLDivElement>(null);
@@ -58,8 +60,13 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
 
   const handleExport = () => {
     // Open export modal or trigger export function
-    onExport(); 
+    // onExport(); 
+    setShowExportModal(true);
     setFileMenuOpen(false);
+  };
+  // Function to handle the export logic
+  const handleExportSignals = (selectedChannels: number[]) => {
+    onExport(selectedChannels);
   };
 
   const handleCloseScope = () => {
@@ -256,6 +263,19 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
                 onThemeChange={onThemeChange}
                 currentTheme={currentTheme}
             />
+        )}
+
+        {/* Conditionally render the ExportModal */}
+        {showExportModal && (
+          <ExportModal
+            onClose={() => setShowExportModal(false)}
+            onExport={handleExportSignals}
+            availableChannels={[
+              { index: 0, name: 'Channel 1' },
+              { index: 1, name: 'Channel 2' },
+              // Add more channels as needed
+            ]}
+          />
         )}
     </div>
   );

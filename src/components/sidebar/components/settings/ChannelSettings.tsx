@@ -3,27 +3,36 @@ import React from 'react';
 
 interface ChannelSettingsProps {
   channelIndex: number;
+  offset: number;
+  range: number;
   onOffsetChange: (offset: number) => void;
   onRangeChange: (range: number) => void;
 }
 
-const ChannelSettings: React.FC<ChannelSettingsProps> = ({ channelIndex, onOffsetChange, onRangeChange }) => (
+const ChannelSettings: React.FC<ChannelSettingsProps> = ({
+  channelIndex,
+  offset,
+  range,
+  onOffsetChange,
+  onRangeChange,
+}) => (
   <div>
-    <label className="block mb-1 text-xs">Channel {channelIndex + 1} Settings</label>
-    <div className="mb-1">
-      <label className="text-xs">Offset (V):</label>
+    <div className="mb-4">
+      <label className="block text-xs mb-1">Offset (V):</label>
       <input
         type="number"
+        value={offset}
         onChange={(e) => onOffsetChange(parseFloat(e.target.value))}
-        className="bg-gray-700 text-white px-2 py-1 rounded w-full text-xs h-6"
+        className="w-full px-2 py-1 border rounded text-xs"
       />
     </div>
-    <div>
-      <label className="text-xs">Range (V/Div):</label>
+    <div className="mb-4">
+      <label className="block text-xs mb-1">Range (V/Div):</label>
       <input
         type="number"
+        value={range}
         onChange={(e) => onRangeChange(parseFloat(e.target.value))}
-        className="bg-gray-700 text-white px-2 py-1 rounded w-full text-xs h-6"
+        className="w-full px-2 py-1 border rounded text-xs"
       />
     </div>
   </div>
