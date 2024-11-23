@@ -86,6 +86,7 @@ const App: React.FC = () => {
     'C2 Delta Y / Delta X',
   ]);
   const [consoleExpanded, setConsoleExpanded] = useState<boolean>(false);
+  const [showAllAnnotations, setShowAllAnnotations] = useState<boolean>(false);
   const toggleConsole = () => {
     setConsoleExpanded((prev) => !prev);
   };
@@ -197,7 +198,13 @@ const App: React.FC = () => {
       <div className="flex-1 flex flex-col">
         <div className="bg-gray-300 dark:bg-gray-800 text-black dark:text-white p-2">
           <h1 className="text-xl font-bold">Scope Waveform</h1>
-          <Toolbar onThemeChange={handleThemeChange} currentTheme={theme} onExport={handleExport} />
+          <Toolbar 
+            onThemeChange={handleThemeChange} 
+            currentTheme={theme} 
+            onExport={handleExport} 
+            onToggleCursorConsole={toggleConsole} // Pass the toggle function
+            consoleExpanded={consoleExpanded}
+          />
         </div>
         {/* Waveform plot container */}
         <div className="flex-1 flex relative">
@@ -238,18 +245,19 @@ const App: React.FC = () => {
                   setHoveredCursorId={setHoveredCursorId}
                   getCursorProperties={getCursorProperties}
                   addXcursor={addXcursor} // Pass addXcursor if needed
+                  showAllAnnotations={showAllAnnotations}
                 />
               </div>
               {/* Console Toggle Button */}
-              <div style={{ position: 'absolute', bottom: '10px', right: '10px', zIndex: 10 }}>
+              {/* <div style={{ position: 'absolute', bottom: '10px', right: '10px', zIndex: 10 }}>
                 <button
                   onClick={toggleConsole}
                   className="bg-gray-800 text-white px-2 py-1 rounded"
                   style={{ fontSize: '12px' }}
                 >
                   {consoleExpanded ? 'Hide Console' : 'Show Console'}
-                </button>
-              </div>
+                </button> */}
+              {/* </div> */}
               {/* Cursor Console */}
               {consoleExpanded && (
                 <div style={{ flex: '0 0 auto', height: '200px', overflowY: 'auto' }}>
@@ -261,6 +269,8 @@ const App: React.FC = () => {
                     visibleProperties={visibleProperties}
                     setVisibleProperties={setVisibleProperties}
                     getCursorProperties={getCursorProperties}
+                    showAllAnnotations={showAllAnnotations}
+                    setShowAllAnnotations={setShowAllAnnotations}
                   />
                 </div>
               )}

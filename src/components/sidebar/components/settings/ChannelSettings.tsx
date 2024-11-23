@@ -23,7 +23,7 @@ const ChannelSettings: React.FC<ChannelSettingsProps> = ({
         type="number"
         value={offset}
         onChange={(e) => onOffsetChange(parseFloat(e.target.value))}
-        className="w-full px-2 py-1 border rounded text-xs"
+        className="w-full px-2 py-1 border rounded text-xs text-black"
       />
     </div>
     <div className="mb-4">
@@ -32,7 +32,7 @@ const ChannelSettings: React.FC<ChannelSettingsProps> = ({
         type="number"
         value={range}
         onChange={(e) => onRangeChange(parseFloat(e.target.value))}
-        className="w-full px-2 py-1 border rounded text-xs"
+        className="w-full px-2 py-1 border rounded text-xs text-black"
       />
     </div>
   </div>

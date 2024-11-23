@@ -3,18 +3,19 @@ import AcquisitionControls from '../AcquisitionControls';
 import { startAcquisition, stopAcquisition, singleAcquisition, setSamplingRate, setTrigger, updateData } from '../../features/acquisitionSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
-import { FiSettings } from 'react-icons/fi';
+import { FiSettings, FiCheck } from 'react-icons/fi';
 import SettingsMenu from './settings/settingsMenu';
 import ExportModal from './export/ExportModal';
-// import { ExportOptions } from '../../helpers/fileExport';
 import { ExportOptions } from '../../helpers/types';
 
 interface ToolbarProps {
     onThemeChange: (theme: 'light' | 'dark') => void;
     currentTheme: 'light' | 'dark'; 
     onExport: (selectedChannels: number[], exportOptions: ExportOptions) => void;
+    onToggleCursorConsole: () => void; // add this prop
+    consoleExpanded: boolean
 }
-const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}) => {
+const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport, onToggleCursorConsole, consoleExpanded}) => {
 
     
   const dispatch = useDispatch<AppDispatch>();
@@ -22,10 +23,12 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
   const { data, samplingRate, isAcquiring } = useSelector((state: RootState) => state.acquisition);
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [controlMenuOpen, setControlMenuOpen] = useState(false);
+  const [viewMenuOpen, setViewMenuOpen] = useState(false); // New state for View menu
   const [showExportModal, setShowExportModal] = useState(false);
 
   const fileMenuRef = useRef<HTMLDivElement>(null);
   const controlMenuRef = useRef<HTMLDivElement>(null);
+  const viewMenuRef = useRef<HTMLDivElement>(null); // New ref for View menu
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -43,13 +46,20 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
       ) {
         setControlMenuOpen(false);
       }
+      if (
+        viewMenuOpen &&
+        viewMenuRef.current &&
+        !viewMenuRef.current.contains(event.target as Node)
+      ) {
+        setViewMenuOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [fileMenuOpen, controlMenuOpen]);
+  }, [fileMenuOpen, controlMenuOpen, viewMenuOpen]);
 
   // Event handlers for menu items
   const handleNewScope = () => {
@@ -113,6 +123,12 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
     });
   };
 
+  const sampleData = {
+    0: [1.23, 2.34, 3.45, 4.56, 5.67], // Sample data for Channel 0
+    1: [5.67, 4.56, 3.45, 2.34, 1.23], // Sample data for Channel 1
+    // Add more channels as needed
+  }
+
   useEffect(() => {
     if (isAcquiring) {
       const interval = setInterval(() => {
@@ -127,17 +143,18 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
   }, [isAcquiring, samplingRate, dispatch]);
   return (
     <div>
-        <div className="bg-gray-100 dark:bg-gray-700 py-1 px-3 flex justify-between items-center border-b-2 border-gray-600">
+        <div className="bg-gray-100 dark:bg-gray-700 py-1 px-3 flex justify-between items-center border-b-2 border-gray-600 z-10">
          {/* Top Toolbar */}
           {/* Left Section - Menus */}
           <div className="flex space-x-3">
             {/* File Menu */}
             <div className="relative">
               <button
-                className="text-white text-sm hover:text-gray-300"
+                className="text-white text-sm hover:text-gray-300 py-1"
                 onClick={() => {
                   setFileMenuOpen(!fileMenuOpen);
                   setControlMenuOpen(false); // Close Control menu when File menu is opened
+                  setViewMenuOpen(false);
                 }}
                 
               >
@@ -178,7 +195,7 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
             {/* Control Menu */}
             <div className="relative">
               <button
-                className="text-white text-sm hover:text-gray-300"
+                className="text-white text-sm hover:text-gray-300 py-1"
                 onClick={() => {
                   setControlMenuOpen(!controlMenuOpen);
                   setFileMenuOpen(false); // Close Control menu when File menu is opened
@@ -224,6 +241,38 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
                 </div>
               )}
             </div>
+            {/* View Menu */}
+          <div className="relative" ref={viewMenuRef}>
+            <button
+              className="text-white text-sm hover:text-gray-300 py-1"
+              onClick={() => {
+                setViewMenuOpen(!viewMenuOpen);
+                setFileMenuOpen(false);
+                setControlMenuOpen(false);
+              }}
+            >
+              View
+            </button>
+            {viewMenuOpen && (
+              <div className="absolute left-0 mt-1 w-40 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 shadow-lg z-50">
+                <ul>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer flex items-center"
+                    onClick={() => {
+                      onToggleCursorConsole();
+                      setViewMenuOpen(false);
+                    }}
+                  >
+                    <span className='mr-2'>
+                      {consoleExpanded && <FiCheck />}
+                    </span>
+                    Cursors
+                  </li>
+                  {/* Add more view options if needed */}
+                </ul>
+              </div>
+            )}
+          </div>
           </div>
   
             {/* <div className="flex space-x-3">
@@ -235,8 +284,8 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
 
             {/* Right Section - Additional Controls */}
           <div className="flex space-x-3">
-                <button className="text-white text-sm hover:text-gray-300">Recording</button>
-                <button className="text-white text-sm hover:text-gray-300">Triggers</button>
+                <button className="text-white text-sm hover:text-gray-300 py-1">Recording</button>
+                <button className="text-white text-sm hover:text-gray-300 py-1">Triggers</button>
                 <FiSettings
                     onClick={() => setShowSettings(true)} // Open the settings menu when clicked 
                     className=" cursor-pointer text-gray-700 hover:text-gray-300 dark:text-white"
@@ -277,6 +326,7 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
               { index: 1, name: 'Channel 2' },
               // Add more channels as needed
             ]}
+            sampleData={sampleData}
           />
         )}
     </div>

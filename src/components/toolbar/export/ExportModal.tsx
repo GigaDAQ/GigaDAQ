@@ -5,6 +5,7 @@ interface ExportModalProps {
     onClose: () => void;
     availableChannels: {index: number; name: string}[];
     onExport: (selectedChannels: number[], exportOptions: ExportOptions) => void;
+    sampleData: {[channelIndex: number]: number[]};
 }
 
 // interface ExportOptions {
@@ -17,6 +18,7 @@ const ExportModal: React.FC<ExportModalProps> = (
         onClose,
         availableChannels,
         onExport,
+        sampleData,
     }
 ) => {
     const modalRef = useRef<HTMLDivElement>(null);
@@ -29,6 +31,54 @@ const ExportModal: React.FC<ExportModalProps> = (
     );
     const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
     const [includeHeaders, setIncludeHeaders] = useState<boolean>(true);
+
+    //for export preview
+    const [formattedPreview, setFormattedPreview] = useState<string>('');
+    // preview effect 
+    useEffect(() => {
+        const generatePreview = () => {
+          // Get selected channels data
+          const selectedData = selectedChannels.map((channelIndex) => ({
+            name:
+              availableChannels.find((ch) => ch.index === channelIndex)?.name ||
+              `Channel ${channelIndex + 1}`,
+            data: sampleData[channelIndex] || [],
+          }));
+    
+          if (selectedData.length === 0) {
+            setFormattedPreview('No channels selected.');
+            return;
+          }
+    
+          if (exportFormat === 'csv') {
+            let csvContent = '';
+    
+            if (includeHeaders) {
+              csvContent += selectedData.map((ch) => ch.name).join(',') + '\n';
+            }
+    
+            const maxLength = Math.max(...selectedData.map((ch) => ch.data.length));
+    
+            for (let i = 0; i < Math.min(maxLength, 5); i++) {
+              const row = selectedData.map((ch) => ch.data[i] ?? '').join(',');
+              csvContent += row + '\n';
+            }
+    
+            setFormattedPreview(csvContent);
+          } else if (exportFormat === 'json') {
+            const jsonData: any = {};
+    
+            selectedData.forEach((ch) => {
+              jsonData[ch.name] = ch.data.slice(0, 5);
+            });
+    
+            setFormattedPreview(JSON.stringify(jsonData, null, 2));
+          }
+        };
+    
+        generatePreview();
+    }, [selectedChannels, exportFormat, includeHeaders, sampleData]);
+      
 
     const toggleChannel = (index: number) => {
         setSelectedChannels( (prev) => 
@@ -92,7 +142,7 @@ const ExportModal: React.FC<ExportModalProps> = (
 
     return (
         <>
-            <div className="fixed inset-0 flex items-center justify-center z-10" onMouseDown={handleMouseDown}>
+            <div className="fixed inset-0 flex items-center justify-center z-20" onMouseDown={handleMouseDown}>
                 {/* Overlay */}
                 <div className="absolute inset-0 bg-black opacity-50" onClick={onClose}></div>
 
@@ -179,6 +229,15 @@ const ExportModal: React.FC<ExportModalProps> = (
                     >
                         Export
                     </button>
+                    </div>
+                    <div className="mt-4">
+                        <h3 className="text-sm font-semibold mb-2">Preview</h3>
+                        <div
+                            className="border p-2 rounded bg-gray-100 dark:bg-gray-900 text-sm overflow-auto"
+                            style={{ maxHeight: '200px' }}
+                        >
+                            <pre className="whitespace-pre-wrap">{formattedPreview}</pre>
+                        </div>
                     </div>
                 </div>
             </div>

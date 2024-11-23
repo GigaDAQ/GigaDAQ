@@ -45,16 +45,16 @@ const AcquisitionControls: React.FC<AcquisitionControlsProps> = ({
 
     return (
         <>
-         <div className="flex items-center justify-between w-full  py-2 px-4 text-white">
+         <div className="flex items-center justify-between w-full  py-1 px-2 text-white">
       {/* Left: Acquisition Buttons */}
       <div className="flex space-x-4">
-        <button className="bg-green-500 hover:bg-green-600 text-sm text-white py-1 px-3 rounded" onClick={handleStart}>
+        <button className="bg-green-500 hover:bg-green-600 text-sm text-white py-1 px-2 rounded" onClick={handleStart}>
           Start
         </button>
-        <button className="bg-red-500 hover:bg-red-600 text-sm text-white py-1 px-3 rounded" onClick={handleStop}>
+        <button className="bg-red-500 hover:bg-red-600 text-sm text-white py-1 px-2 rounded" onClick={handleStop}>
           Stop
         </button>
-        <button className="bg-yellow-500 hover:bg-yellow-600 text-sm text-white py-1 px-3 rounded" onClick={handleSingleAcquisition}>
+        <button className="bg-yellow-500 hover:bg-yellow-600 text-sm text-white py-1 px-2 rounded" onClick={handleSingleAcquisition}>
           Single Acquisition
         </button>
       </div>

@@ -73,14 +73,24 @@ const LineProperties: React.FC<LinePropertiesProp> = ({
             {/* Line Width */}
             <div className="mb-4">
                 <label className="block text-xs mb-1">Line Width:</label>
-                <input
-                type="range"
-                min={1}
-                max={10}
-                value={lineProperties.width}
-                onChange={handleWidthChange}
-                className="w-full px-2 py-1 border rounded text-xs text-black"
-                />
+                <div className="flex items-center space-x-2">
+                    <input
+                        type="range"
+                        min={1}
+                        max={10}
+                        value={lineProperties.width}
+                        onChange={handleWidthChange}
+                        className="flex-grow px-2 py-1 border rounded text-xs text-black"
+                    />
+                    <input
+                        type="number"
+                        min={1}
+                        max={10}
+                        value={lineProperties.width}
+                        onChange={handleWidthChange}
+                        className="w-8 px-1 py-1 border rounded text-xs text-black text-center"
+                    />
+                </div>
             </div>
             {/* Line Style */}
             <div className="mb-4">

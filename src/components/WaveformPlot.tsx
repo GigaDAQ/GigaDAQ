@@ -8,6 +8,7 @@ import YAxisControl from './waveform/components/YAxisControl';
 import PlotControlBar from './waveform/components/PlotControlBar';
 import { LineProperty } from './sidebar/components/settings/LineProperties';
 import { DataPoint, XCursor } from '../helpers/types';
+import { GrHadoop } from 'react-icons/gr';
 // import CursorConsole from './waveform/components/CursorConsole';
 
 
@@ -35,6 +36,7 @@ interface WaveformPlotProps {
   setHoveredCursorId: React.Dispatch<React.SetStateAction<number | null>>;
   getCursorProperties: (cursor: XCursor) => Record<string, any>;
   addXcursor: (type: 'normal' | 'delta') => void;
+  showAllAnnotations: boolean;
 }
 
 const WaveformPlot: React.FC<WaveformPlotProps> = (
@@ -60,6 +62,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     setHoveredCursorId,
     getCursorProperties,
     addXcursor,
+    showAllAnnotations,
   }
 ) => {
   const [graphDiv, setGraphDiv] = useState<HTMLElement | null>(null);
@@ -70,10 +73,10 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   const sineWave: DataPoint[] = data[0]?.length ? data[0] : Array(1000).fill({time: 0, value: 0});
   const squareWave: DataPoint[] = data[1]?.length ? data[1] : Array(1000).fill({time: 0, value: 0});
 
-  // State to hold cursor label positions
-  const [cursorLabelPositions, setCursorLabelPositions] = useState<{ id: number; xPixel: number }[]>(
-    []
-  );
+  // // State to hold cursor label positions
+  // const [cursorLabelPositions, setCursorLabelPositions] = useState<{ id: number; xPixel: number }[]>(
+  //   []
+  // );
 
   const [xRange, setXRange] = useState<[number, number]>([
     timePosition - (5 * timeBase),
@@ -107,14 +110,16 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
 
   const handleCursorDragMouseMove = (e: MouseEvent) => {
     if (draggingCursorId !== null && plotDimensions) {
-      const { left, width } = plotDimensions;
+      const mouseX = e.clientX - plotDimensions.left;
+      // const { left, width } = plotDimensions;
   
-      const mouseX = e.clientX - left;
+      // const mouseX = e.clientX - left;
   
       // Calculate x data coordinate
       const xAxisRange = plotLayout.xaxis.range;
+      if (mouseX < 0 || mouseX > plotDimensions.width) return;
       const xData =
-        ((mouseX / width) * (xAxisRange[1] - xAxisRange[0])) + xAxisRange[0];
+        ((mouseX / plotDimensions.width) * (xAxisRange[1] - xAxisRange[0])) + xAxisRange[0];
   
       // Update the position of the dragging cursor
       setXCursors((prevCursors) =>
@@ -125,56 +130,32 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     }
   };
 
-  
-  // const [visibleProperties, setVisibleProperties] = useState<string[]>([
-  //   'Position',
-  //   'Ref',
-  //   'Delta X',
-  //   '1/Delta X',
-  //   'C1',
-  //   'C1 Delta Y',
-  //   'C1 Delta Y / Delta X',
-  //   'C2',
-  //   'C2 Delta Y',
-  //   'C2 Delta Y / Delta X',
-  // ]);
-  
-  // const allProperties = [
-  //   'Position',
-  //   'Ref',
-  //   'Delta X',
-  //   '1/Delta X',
-  //   'C1',
-  //   'C1 Delta Y',
-  //   'C1 Delta Y / Delta X',
-  //   'C2',
-  //   'C2 Delta Y',
-  //   'C2 Delta Y / Delta X',
-  // ];
-  
-   
-  
-  
-
   const [plotDimensions, setPlotDimensions] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+  console.log("the dimensions are :", plotDimensions);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!plotDimensions) return;
   
-    const { left, top, width, height } = plotDimensions;
+    // const { left, top, width, height } = plotDimensions;
+    const mouseX = e.clientX - plotDimensions.left;
   
-    const mouseX = e.clientX - left;
-    const mouseY = e.clientY - top;
+    // const mouseX = e.clientX - left;
+    // const mouseY = e.clientY - top;
+    // Ensure mouseX is within plot area
+    if (mouseX < 0 || mouseX > plotDimensions.width) {
+      setHoveredCursorId(null);
+      return;
+    }
   
     // Calculate x data coordinate
     const xAxisRange = plotLayout.xaxis.range;
     const xData =
-      ((mouseX / width) * (xAxisRange[1] - xAxisRange[0])) + xAxisRange[0];
+      ((mouseX / plotDimensions.width) * (xAxisRange[1] - xAxisRange[0])) + xAxisRange[0];
   
     // You can also calculate y data coordinate if needed
   
     // Check proximity to cursors
-    const proximityThreshold = (xAxisRange[1] - xAxisRange[0]) * 0.01; // Adjust as needed
+    const proximityThreshold = (xAxisRange[1] - xAxisRange[0]) * 0.02; // Adjust as needed
     const nearbyCursor = xCursors.find((cursor) =>
       Math.abs(cursor.position - xData) < proximityThreshold
     );
@@ -213,6 +194,40 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [draggingCursorId]);
+
+
+  // // to check plot area bounds for custom divs of cursors
+  // const [plotArea, setPlotArea] = useState<{
+  //   x: number;
+  //   y: number;
+  //   width: number;
+  //   height: number;
+  // } | null>(null);
+
+  // // updating plot area dimensins 
+  const updatePlotDimensions = (graphDiv: HTMLElement) => {
+    // Try to get the plot area element
+    const plotAreaElement = graphDiv.querySelector('.main-svg .cartesianlayer .subplot.xy') as HTMLElement;
+  
+    if (plotAreaElement) {
+      const plotAreaRect = plotAreaElement.getBoundingClientRect();
+      setPlotDimensions({
+        left: plotAreaRect.left,
+        top: plotAreaRect.top,
+        width: plotAreaRect.width,
+        height: plotAreaRect.height,
+      });
+    } else {
+      // Fallback to the graphDiv dimensions or adjust accordingly
+      const rect = graphDiv.getBoundingClientRect();
+      setPlotDimensions({
+        left: rect.left + 65, // Adjust '65' based on your observation
+        top: rect.top,
+        width: rect.width - 130, // Adjust '130' to account for both sides
+        height: rect.height,
+      });
+    }
+  };
   
 
   const [isLegendVisible, setIsLegendVisible] = useState<boolean>(true);
@@ -354,46 +369,42 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
 
   // Generate annotations for cursors
   const cursorAnnotations = xCursors.flatMap((cursor) => {
-
-    if ( cursor.id !== hoveredCursorId ) {
+    if (!showAllAnnotations && cursor.id !== hoveredCursorId) {
       // Only display annotations for the hovered cursor
       return [];
     }
+  
     const intersections = getCursorIntersections(cursor);
-
-    // Cursor label at the top of the plot
-    const cursorLabelAnnotation = {
-      x: cursor.position,
-      y: 0, // At the bottom of the plot
-      xref: 'x',
-      yref: 'paper',
-      text: cursor.label,
-      showarrow: false,
-      xanchor: 'center',
-      yanchor: 'top',
-      font: {
-        color: 'red',
-      },
-      bgcolor: 'rgba(255,255,255,0.8)',
-    };
-
-    // Annotations at intersection points
-    const intersectionAnnotations = intersections.map((intersection) => ({
-      x: cursor.position,
-      y: intersection.value,
-      xref: 'x',
-      yref: `y${intersection.channelIndex === 0 ? '' : intersection.channelIndex + 1}`,
-      text: `C${intersection.channelIndex + 1}: ${intersection.value.toFixed(3)} V`,
-      showarrow: false,
-      xanchor: 'left',
-      yanchor: 'bottom',
-      font: { color: channelLineProperties[intersection.channelIndex].color },
-      bgcolor: 'rgba(255,255,255,0.8)',
-    }));
-
-    return [cursorLabelAnnotation, ...intersectionAnnotations];
-    // return intersectionAnnotations;
+  
+    // Detect and stagger overlapping annotations
+    const staggeredAnnotations = intersections.map((intersection, index, array) => {
+      // Calculate the number of overlapping annotations
+      const overlaps = array.filter(
+        (other) =>
+          Math.abs(other.value - intersection.value) < 0.01 && // Close y-values
+          other.channelIndex !== intersection.channelIndex // Different channels
+      );
+  
+      // Stagger offset by the index in the overlap array
+      const yOffset = overlaps.indexOf(intersection) * 10; // 10px offset for overlapping labels
+  
+      return {
+        x: cursor.position,
+        y: intersection.value + yOffset * 0.001, // Adjust Y by offset (scaled to match plot units)
+        xref: 'x',
+        yref: `y${intersection.channelIndex === 0 ? '' : intersection.channelIndex + 1}`,
+        text: `C${intersection.channelIndex + 1}: ${intersection.value.toFixed(3)} V`,
+        showarrow: false,
+        xanchor: 'center',
+        yanchor: 'bottom', // Adjust anchor to stagger vertically
+        font: { color: channelLineProperties[intersection.channelIndex].color },
+        bgcolor: 'rgba(255,255,255,0.8)',
+      };
+    });
+  
+    return staggeredAnnotations;
   });
+  
 
 
 
@@ -551,16 +562,16 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
             onInitialized={(figure, graphDiv) => {
               setGraphDiv(graphDiv); // Update state for topbar functions
               plotRef.current = graphDiv as PlotlyHTMLElement; // Store reference for cursor functionality
-              const rect = graphDiv.getBoundingClientRect();
-              setPlotDimensions({
-                left: rect.left,
-                top: rect.top,
-                width: rect.width,
-                height: rect.height,
-              });
+              updatePlotDimensions(graphDiv);
+              // const rect = graphDiv.getBoundingClientRect();
+              // const plotAreaDimensions = calculatePlotAreaDimensions(rect, figure.layout);
+              // console.log("dimensions are : ", plotAreaDimensions);
+              // setPlotDimensions(plotAreaDimensions);
             }}
             onUpdate={(figure, graphDiv) => {
               plotRef.current = graphDiv as PlotlyHTMLElement;
+              // updatePlotAreaDimensions(graphDiv, figure.layout);
+              // updatePlotDimensions(graphDiv);
             }}
           />
         )}
@@ -574,7 +585,9 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
       const xAxisRange = plotLayout.xaxis.range;
 
       // Calculate pixel position
-      const xPos = ((cursor.position - xAxisRange[0]) / (xAxisRange[1] - xAxisRange[0])) * width;
+      const xRatio = (cursor.position - xAxisRange[0]) / (xAxisRange[1] - xAxisRange[0]);
+      console.log("xratio, width, : ", xRatio, width);
+      const xPos = 30 + left + (xRatio * (width - 45));
 
       return (
         <div
@@ -583,7 +596,8 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
           style={{
             position: 'absolute',
             left: `${xPos}px`,
-            bottom: 0,
+            bottom: 10,
+            // top: `${plotDimensions.top }px`, // Position above the plot area
             transform: 'translate(-50%, 0)',
             zIndex: 10,
           }}
@@ -596,6 +610,7 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
               color: 'black',
               padding: '2px',
               borderRadius: '2px',
+              cursor: 'pointer',
             }}
           >
             {cursor.label}
