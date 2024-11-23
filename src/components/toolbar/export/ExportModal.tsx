@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from "react";
+import { ExportOptions } from "../../../helpers/types";
 
 interface ExportModalProps {
     onClose: () => void;
     availableChannels: {index: number; name: string}[];
-    onExport: (selectedChannels: number[]) => void;
+    onExport: (selectedChannels: number[], exportOptions: ExportOptions) => void;
 }
+
+// interface ExportOptions {
+//     format: 'csv' | 'mat';
+//     includeHeaders: boolean;
+// }
 
 const ExportModal: React.FC<ExportModalProps> = (
     {
@@ -21,6 +27,8 @@ const ExportModal: React.FC<ExportModalProps> = (
     const [selectedChannels, setSelectedChannels] = useState<number[]>(
         availableChannels.map((channel) => channel.index)
     );
+    const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
+    const [includeHeaders, setIncludeHeaders] = useState<boolean>(true);
 
     const toggleChannel = (index: number) => {
         setSelectedChannels( (prev) => 
@@ -38,7 +46,11 @@ const ExportModal: React.FC<ExportModalProps> = (
     };
     
     const handleExport = () => {
-        onExport(selectedChannels);
+        const exportOptions: ExportOptions = {
+            format: exportFormat,
+            includeHeaders: includeHeaders,
+        }
+        onExport(selectedChannels, exportOptions);
         onClose();
     };
 
@@ -114,6 +126,43 @@ const ExportModal: React.FC<ExportModalProps> = (
                         Deselect All
                         </button>
                     </div>
+                         {/* Export Options */}
+                    <div className="mt-4">
+                        <h3 className="text-sm font-semibold mb-2">Export Format</h3>
+                        <div className="flex items-center mb-2">
+                            <input
+                            type="radio"
+                            id="formatCsv"
+                            name="exportFormat"
+                            value="csv"
+                            checked={exportFormat === 'csv'}
+                            onChange={() => setExportFormat('csv')}
+                            />
+                            <label htmlFor="formatCsv" className="ml-2">CSV</label>
+                        </div>
+                        <div className="flex items-center mb-2">
+                            <input
+                            type="radio"
+                            id="formatJson"
+                            name="exportFormat"
+                            value="json"
+                            checked={exportFormat === 'json'}
+                            onChange={() => setExportFormat('json')}
+                            />
+                            <label htmlFor="formatJson" className="ml-2">JSON</label>
+                        </div>
+
+                        {/* Include Headers Option */}
+                        <div className="flex items-center mt-4">
+                            <input
+                            type="checkbox"
+                            id="includeHeaders"
+                            checked={includeHeaders}
+                            onChange={() => setIncludeHeaders(!includeHeaders)}
+                            />
+                            <label htmlFor="includeHeaders" className="ml-2">Include Headers</label>
+                        </div>
+                        </div>
                     </div>
 
                     {/* Actions */}

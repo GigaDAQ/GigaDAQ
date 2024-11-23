@@ -6,11 +6,13 @@ import { RootState, AppDispatch } from '../../store';
 import { FiSettings } from 'react-icons/fi';
 import SettingsMenu from './settings/settingsMenu';
 import ExportModal from './export/ExportModal';
+// import { ExportOptions } from '../../helpers/fileExport';
+import { ExportOptions } from '../../helpers/types';
 
 interface ToolbarProps {
     onThemeChange: (theme: 'light' | 'dark') => void;
     currentTheme: 'light' | 'dark'; 
-    onExport: (selectedChannels: number[]) => void;
+    onExport: (selectedChannels: number[], exportOptions: ExportOptions) => void;
 }
 const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}) => {
 
@@ -65,8 +67,8 @@ const Toolbar: React.FC<ToolbarProps> = ({onThemeChange, currentTheme, onExport}
     setFileMenuOpen(false);
   };
   // Function to handle the export logic
-  const handleExportSignals = (selectedChannels: number[]) => {
-    onExport(selectedChannels);
+  const handleExportSignals = (selectedChannels: number[], exportOptioms: ExportOptions) => {
+    onExport(selectedChannels, exportOptioms);
   };
 
   const handleCloseScope = () => {

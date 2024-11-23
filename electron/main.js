@@ -17,9 +17,17 @@ async function createWindow(){
         height: 800,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'), // if you need to preload any scripts
-            nodeIntegration: true,
+            nodeIntegration: false,
+            contextIsolation: true, // cannot be chaged by any renderer process, makes our app more secure
+            sandbox: true,
         }
     });
+
+    // Event listeners on the window
+    win.webContents.on("did-finish-load", () =>{
+        win.show();
+        win.focus();
+    })
 
     win.loadURL('http://localhost:5173');
 }

@@ -1,20 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Plot from 'react-plotly.js';
 // import Plotly, { Layout } from 'plotly.js';
-import Plotly, { Layout } from 'plotly.js-basic-dist';
+import Plotly, { Layout, PlotlyHTMLElement } from 'plotly.js-basic-dist';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import VoltageOffsetIndicator from './waveform/components/VoltageOffsetIndicator';
 import YAxisControl from './waveform/components/YAxisControl';
 import PlotControlBar from './waveform/components/PlotControlBar';
 import { LineProperty } from './sidebar/components/settings/LineProperties';
+import { DataPoint, XCursor } from '../helpers/types';
+// import CursorConsole from './waveform/components/CursorConsole';
 
-// const Plot = createPlotlyComponent(Plotly);
-
-
-interface DataPoint{
-  time: number;
-  value: number;
-}
 
 interface WaveformPlotProps {
   data: DataPoint[][];
@@ -32,6 +27,14 @@ interface WaveformPlotProps {
   onOffsetChange: (channelIndex: number, newOffset: number) => void; 
   channelLineProperties: LineProperty[];
   visibleSignals: boolean[];
+  xCursors: XCursor[];
+  setXCursors: React.Dispatch<React.SetStateAction<XCursor[]>>;
+  draggingCursorId: number | null;
+  setDraggingCursorId: React.Dispatch<React.SetStateAction<number | null>>;
+  hoveredCursorId: number | null;
+  setHoveredCursorId: React.Dispatch<React.SetStateAction<number | null>>;
+  getCursorProperties: (cursor: XCursor) => Record<string, any>;
+  addXcursor: (type: 'normal' | 'delta') => void;
 }
 
 const WaveformPlot: React.FC<WaveformPlotProps> = (
@@ -49,12 +52,28 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     onOffsetChange,
     channelLineProperties,
     visibleSignals,
+    xCursors,
+    setXCursors,
+    draggingCursorId,
+    setDraggingCursorId,
+    hoveredCursorId,
+    setHoveredCursorId,
+    getCursorProperties,
+    addXcursor,
   }
 ) => {
   const [graphDiv, setGraphDiv] = useState<HTMLElement | null>(null);
+  // const [xCursors, setXCursors] = useState<XCursor[]>([]);
+  // const [draggingCursorId, setDraggingCursorId] = useState<number | null>(null);
+  // const [hoveredCursorId, setHoveredCursorId] = useState<number | null>(null);
   // Safegaurd to ensure data is not empty
   const sineWave: DataPoint[] = data[0]?.length ? data[0] : Array(1000).fill({time: 0, value: 0});
   const squareWave: DataPoint[] = data[1]?.length ? data[1] : Array(1000).fill({time: 0, value: 0});
+
+  // State to hold cursor label positions
+  const [cursorLabelPositions, setCursorLabelPositions] = useState<{ id: number; xPixel: number }[]>(
+    []
+  );
 
   const [xRange, setXRange] = useState<[number, number]>([
     timePosition - (5 * timeBase),
@@ -69,15 +88,132 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
   };
 
 
-    // Function to update range dynamically based on timePosition and timeBase
+  // Function to update range dynamically based on timePosition and timeBase
   const updateXRange = () => {
     const newXRangeStart = timePosition - (5 * timeBase); // 5 divisions to the left of timePosition
     const newXRangeEnd = timePosition + (5 * timeBase);   // 5 divisions to the right of timePosition
     setXRange([newXRangeStart, newXRangeEnd]);
   };
+  const plotRef = useRef<PlotlyHTMLElement |  null>(null);
 
   // Change to make variable instead of hardcoded
-  const channelColors = ['#00ff00', '#ff0000'];
+  // const channelColors = ['#00ff00', '#ff0000'];
+
+  // Handle mouse down on cursor label
+  const handleCursorMouseDown = (cursorId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDraggingCursorId(cursorId);
+  };
+
+  const handleCursorDragMouseMove = (e: MouseEvent) => {
+    if (draggingCursorId !== null && plotDimensions) {
+      const { left, width } = plotDimensions;
+  
+      const mouseX = e.clientX - left;
+  
+      // Calculate x data coordinate
+      const xAxisRange = plotLayout.xaxis.range;
+      const xData =
+        ((mouseX / width) * (xAxisRange[1] - xAxisRange[0])) + xAxisRange[0];
+  
+      // Update the position of the dragging cursor
+      setXCursors((prevCursors) =>
+        prevCursors.map((cursor) =>
+          cursor.id === draggingCursorId ? { ...cursor, position: xData } : cursor
+        )
+      );
+    }
+  };
+
+  
+  // const [visibleProperties, setVisibleProperties] = useState<string[]>([
+  //   'Position',
+  //   'Ref',
+  //   'Delta X',
+  //   '1/Delta X',
+  //   'C1',
+  //   'C1 Delta Y',
+  //   'C1 Delta Y / Delta X',
+  //   'C2',
+  //   'C2 Delta Y',
+  //   'C2 Delta Y / Delta X',
+  // ]);
+  
+  // const allProperties = [
+  //   'Position',
+  //   'Ref',
+  //   'Delta X',
+  //   '1/Delta X',
+  //   'C1',
+  //   'C1 Delta Y',
+  //   'C1 Delta Y / Delta X',
+  //   'C2',
+  //   'C2 Delta Y',
+  //   'C2 Delta Y / Delta X',
+  // ];
+  
+   
+  
+  
+
+  const [plotDimensions, setPlotDimensions] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!plotDimensions) return;
+  
+    const { left, top, width, height } = plotDimensions;
+  
+    const mouseX = e.clientX - left;
+    const mouseY = e.clientY - top;
+  
+    // Calculate x data coordinate
+    const xAxisRange = plotLayout.xaxis.range;
+    const xData =
+      ((mouseX / width) * (xAxisRange[1] - xAxisRange[0])) + xAxisRange[0];
+  
+    // You can also calculate y data coordinate if needed
+  
+    // Check proximity to cursors
+    const proximityThreshold = (xAxisRange[1] - xAxisRange[0]) * 0.01; // Adjust as needed
+    const nearbyCursor = xCursors.find((cursor) =>
+      Math.abs(cursor.position - xData) < proximityThreshold
+    );
+  
+    if (nearbyCursor) {
+      setHoveredCursorId(nearbyCursor.id);
+    } else {
+      setHoveredCursorId(null);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredCursorId(null);
+  };
+
+  const handlePlotClick = () => {
+    setHoveredCursorId(null);
+  }
+
+  // Handle mouse up
+  const handleMouseUp = () => {
+    setDraggingCursorId(null);
+  };
+
+  useEffect(() => {
+    if (draggingCursorId !== null) {
+      window.addEventListener('mousemove', handleCursorDragMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleCursorDragMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+  
+    return () => {
+      window.removeEventListener('mousemove', handleCursorDragMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [draggingCursorId]);
+  
 
   const [isLegendVisible, setIsLegendVisible] = useState<boolean>(true);
 
@@ -181,7 +317,87 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     console.log('Updated line properties:', channelLineProperties);
   }, [channelLineProperties]);
 
-  const plotLayout = {
+  // Function to calculate intersections
+  const getCursorIntersections = (cursor: XCursor) => {
+    const intersections: { channelIndex: number; value: number }[] = [];
+
+    data.forEach((signal, index) => {
+      if (!visibleSignals[index]) return; // Skip if the signal is not visible
+
+      // Find the two data points that surround the cursor's X-position
+      const idx = signal.findIndex((point) => point.time >= cursor.position);
+
+      if (idx === -1 || idx === 0) {
+        // Cursor position is out of bounds or at the start
+        return;
+      }
+
+      const pointBefore = signal[idx - 1];
+      const pointAfter = signal[idx];
+
+      // Linear interpolation to estimate Y-value at cursor.position
+      const slope =
+        (pointAfter.value - pointBefore.value) /
+        (pointAfter.time - pointBefore.time);
+
+      const yValue =
+        pointBefore.value + slope * (cursor.position - pointBefore.time);
+
+      intersections.push({
+        channelIndex: index,
+        value: yValue,
+      });
+    });
+
+    return intersections;
+  };
+
+  // Generate annotations for cursors
+  const cursorAnnotations = xCursors.flatMap((cursor) => {
+
+    if ( cursor.id !== hoveredCursorId ) {
+      // Only display annotations for the hovered cursor
+      return [];
+    }
+    const intersections = getCursorIntersections(cursor);
+
+    // Cursor label at the top of the plot
+    const cursorLabelAnnotation = {
+      x: cursor.position,
+      y: 0, // At the bottom of the plot
+      xref: 'x',
+      yref: 'paper',
+      text: cursor.label,
+      showarrow: false,
+      xanchor: 'center',
+      yanchor: 'top',
+      font: {
+        color: 'red',
+      },
+      bgcolor: 'rgba(255,255,255,0.8)',
+    };
+
+    // Annotations at intersection points
+    const intersectionAnnotations = intersections.map((intersection) => ({
+      x: cursor.position,
+      y: intersection.value,
+      xref: 'x',
+      yref: `y${intersection.channelIndex === 0 ? '' : intersection.channelIndex + 1}`,
+      text: `C${intersection.channelIndex + 1}: ${intersection.value.toFixed(3)} V`,
+      showarrow: false,
+      xanchor: 'left',
+      yanchor: 'bottom',
+      font: { color: channelLineProperties[intersection.channelIndex].color },
+      bgcolor: 'rgba(255,255,255,0.8)',
+    }));
+
+    return [cursorLabelAnnotation, ...intersectionAnnotations];
+    // return intersectionAnnotations;
+  });
+
+
+
+  const plotLayout= {
     autosize: true,
     showlegend: isLegendVisible,
     legend: {
@@ -242,64 +458,163 @@ const WaveformPlot: React.FC<WaveformPlotProps> = (
     plot_bgcolor: currentTheme === 'dark' ? '#222' : '#fff',
     font: { color: currentTheme === 'dark' ? '#fff': '#000' },
     margin: { t: 40, r: expandYAxes ? 50 : 20, l: 50, b: 40 },
+    // hovermode: 'x', // Hover mode for x-axis
+    // shapes: cursorShapes,
+    shapes: [
+      ...xCursors.map((cursor) => ({
+        type: 'line',
+        x0: cursor.position,
+        x1: cursor.position,
+        y0: 0,
+        y1: 1,
+        yref: 'paper',
+        line: {
+          color: 'red',
+          width: 1,
+          dash: 'dot',
+        }
+      })),
+    ],
+    annotations: [
+      // include only annotations for the hovered cursor**
+      ...cursorAnnotations,
+    ]
+    // annotations: [
+    //   ...xCursors.map((cursor) => ({
+    //     x: cursor.position,
+    //     y: 1,
+    //     xref: 'x',
+    //     yref: 'paper',
+    //     text: cursor.label,
+    //     showarrow: false,
+    //     xanchor: 'center',
+    //     yanchor: 'bottom',
+    //     font: {
+    //       color: 'red',
+    //     },
+    //     bgcolor: 'rgba(255,255,255,0.5)',
+    //   }))
+    // ]
   };
 
   return (
-    <div className='plot-container relative bg-gray-100 dark:bg-gray-700 w-full h-full'>
-      <PlotControlBar
-        isLegendVisible= {isLegendVisible}
-        onDownload={handleDownload}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onToogleLegend={handleToggleLegend}
-      />
-      <YAxisControl
-        activeChannel={activeChannel}
-        setActiveChannel={setActiveChannel}
+    <div
+    className="plot-container relative bg-gray-100 dark:bg-gray-700 w-full h-full"
+    style={{ position: 'relative', width: '100%', height: '100%' }}
+  >
+    <PlotControlBar
+      isLegendVisible={isLegendVisible}
+      onDownload={handleDownload}
+      onZoomIn={handleZoomIn}
+      onZoomOut={handleZoomOut}
+      onToogleLegend={handleToggleLegend}
+    />
+    <YAxisControl
+      activeChannel={activeChannel}
+      setActiveChannel={setActiveChannel}
+      expandYAxes={expandYAxes}
+      setExpandYAxes={setExpandYAxes}
+      channelColors={channelLineProperties.map((val) => val.color)}
+    />
+    {/* Voltage Offset Indicators */}
+    {channelOffsets.map((offset, index) => (
+      <VoltageOffsetIndicator
+        key={index}
+        offset={offset}
         expandYAxes={expandYAxes}
-        setExpandYAxes={setExpandYAxes}
-        // channelColors={['#00ff00', '#ff0000']}
-        channelColors={channelLineProperties.map((val) => val.color)}
-      />
-      {/*Voltage Offset Indicators*/}
-      {
-        channelOffsets.map((offset, index) =>(
-          <VoltageOffsetIndicator
-            key={index}
-            offset={offset}
-            expandYAxes={expandYAxes}
-            color={channelLineProperties[index].color}
-            yRange={getYAxisRange(index)}
-            height={100} // Assuming the height is 100% of plot aread,
-            onClick={() => setActiveChannel(index)}
-            isActive={index === activeChannel}
-            left={expandYAxes ? (index === activeChannel ? '35px' : 'calc(100% - 45px)') : '35px'}
-            onOffsetChange={(newOffset) => onOffsetChange(index, newOffset)}
-          ></VoltageOffsetIndicator>
-        ))
-      }
-    <AutoSizer>
-      {({height, width}) =>(
-       <Plot
-      //  divId='waveform-plot'
-      //  ref={plotRef}
-       data= 
-       {plotData}
-       layout= 
-       {plotLayout}
-       config={{
-        displayModeBar: false,
-       }}
-       useResizeHandler
-       style={{ width, height }}
-       onInitialized={(figure, graphDiv) => setGraphDiv(graphDiv)}
-      
-     /> 
-      )}
-      
-    </AutoSizer>
+        color={channelLineProperties[index].color}
+        yRange={getYAxisRange(index)}
+        height={100} // Assuming the height is 100% of plot area
+        onClick={() => setActiveChannel(index)}
+        isActive={index === activeChannel}
+        left={expandYAxes ? (index === activeChannel ? '35px' : 'calc(100% - 45px)') : '35px'}
+        onOffsetChange={(newOffset) => onOffsetChange(index, newOffset)}
+      ></VoltageOffsetIndicator>
+    ))}
+    <div
+      className="plot-overlay"
+      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onClick={handlePlotClick}
+    >
+      <AutoSizer>
+        {({ height, width }) => (
+          <Plot
+            data={plotData}
+            layout={plotLayout}
+            config={{
+              displayModeBar: false,
+            }}
+            useResizeHandler
+            style={{ width, height }}
+            onInitialized={(figure, graphDiv) => {
+              setGraphDiv(graphDiv); // Update state for topbar functions
+              plotRef.current = graphDiv as PlotlyHTMLElement; // Store reference for cursor functionality
+              const rect = graphDiv.getBoundingClientRect();
+              setPlotDimensions({
+                left: rect.left,
+                top: rect.top,
+                width: rect.width,
+                height: rect.height,
+              });
+            }}
+            onUpdate={(figure, graphDiv) => {
+              plotRef.current = graphDiv as PlotlyHTMLElement;
+            }}
+          />
+        )}
+      </AutoSizer>
     </div>
-  );
+    {/* Cursor Labels */}
+    {xCursors.map((cursor) => {
+      if (!plotDimensions) return null;
+
+      const { left, width } = plotDimensions;
+      const xAxisRange = plotLayout.xaxis.range;
+
+      // Calculate pixel position
+      const xPos = ((cursor.position - xAxisRange[0]) / (xAxisRange[1] - xAxisRange[0])) * width;
+
+      return (
+        <div
+          key={cursor.id}
+          className="cursor-label"
+          style={{
+            position: 'absolute',
+            left: `${xPos}px`,
+            bottom: 0,
+            transform: 'translate(-50%, 0)',
+            zIndex: 10,
+          }}
+          onMouseDown={(e) => handleCursorMouseDown(cursor.id, e)}
+          onClick={() => setHoveredCursorId(cursor.id)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              color: 'black',
+              padding: '2px',
+              borderRadius: '2px',
+            }}
+          >
+            {cursor.label}
+          </div>
+        </div>
+      );
+    })}
+    {/* Button to add cursors */}
+    <button
+      onClick={() => {
+        addXcursor('normal');
+      }}
+      className="absolute bottom-1 left-1 bg-gray-800 text-white px-2 py-0 rounded "
+      style={{ zIndex: 10 }}
+    >
+      X
+    </button>
+  </div>
+);
 };
 
 export default WaveformPlot;
